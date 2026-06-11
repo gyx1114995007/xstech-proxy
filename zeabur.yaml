@@ -1,0 +1,12 @@
+# Zeabur配置文件
+name: xstech-proxy
+region: hkg1
+
+services:
+  web:
+    type: nodejs
+    buildCommand: npm install
+    startCommand: npm start
+    port: 3000
+    env:
+      NODE_ENV: production
