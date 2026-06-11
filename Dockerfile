@@ -16,9 +16,13 @@ COPY . .
 # 暴露端口
 EXPOSE 3000
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
-  CMD node -e "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
+# 环境变量（Zeabur会自动设置PORT）
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# 健康检查（延长启动等待时间）
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
 
 # 启动服务
-CMD ["npm", "start"]
+CMD ["node", "index.js"]
