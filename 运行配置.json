@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-11T03:45:15.196Z",
+  "config": {
+    "modelRefreshIntervalSec": 1800,
+    "sessionSyncIntervalMin": 30,
+    "tokenRefreshCheckIntervalSec": 60,
+    "tokenRefreshBeforeSec": 300,
+    "autoSignEnabled": true,
+    "autoSignIntervalHours": 24,
+    "autoSignInitialDelaySec": 15,
+    "logLevel": "DEBUG",
+    "censorProbeModel": "glm-5-1",
+    "notifyEnabled": false,
+    "weworkWebhookUrl": "",
+    "notifyModelChange": true,
+    "notifyFailure": true,
+    "notifyAccountFailure": true,
+    "notifyUpstreamFailure": true,
+    "notifyLowBalance": true,
+    "lowBalanceThreshold": 50000,
+    "notifyCooldownMs": 600000,
+    "upstreamRequestTimeoutMs": 15000,
+    "upstreamStreamTimeoutMs": 180000,
+    "upstreamRetryTimes": 1,
+    "upstreamRetryDelayMs": 800
+  }
+}

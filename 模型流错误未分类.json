@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "说明": "自动收集未命中精细规则的模型 SSE 流错误样例。用于后续补充 模型流错误规则.json。",
+  "样例": [
+    {
+      "time": "2026-06-09T15:33:14.779Z",
+      "type": "model_stream_error",
+      "xstechCode": 1,
+      "message": "文件【chat-image-1】名称不合法",
+      "data": null,
+      "count": 2,
+      "lastSeen": "2026-06-09T15:33:17.928Z"
+    },
+    {
+      "time": "2026-06-06T02:55:45.219Z",
+      "type": "model_stream_error",
+      "xstechCode": 1,
+      "message": "一种全新的奇怪模型错误XYZ-TEST-UNCLASSIFIED-2",
+      "count": 1
+    }
+  ]
+}

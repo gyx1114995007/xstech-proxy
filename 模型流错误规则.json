@@ -1,0 +1,66 @@
+{
+  "version": 1,
+  "说明": "模型聊天 SSE 流错误分类规则。仅用于 code!=0 的模型调用层错误；不处理 HTTP/axios 层 token/平台错误。",
+  "规则": [
+    {
+      "type": "content_censor",
+      "code": "content_censor",
+      "action": "censor_fix",
+      "patterns": ["不允许的文本"]
+    },
+    {
+      "type": "model_rate_limit",
+      "code": "model_rate_limit",
+      "action": "return_error",
+      "patterns": ["429", "rate.?limit", "too many", "频繁", "限流", "请求过于频繁"]
+    },
+    {
+      "type": "model_timeout",
+      "code": "model_timeout",
+      "action": "return_error",
+      "patterns": ["timeout", "timed out", "超时"]
+    },
+    {
+      "type": "model_context_error",
+      "code": "model_context_error",
+      "action": "return_error",
+      "patterns": ["context", "上下文", "长度", "too long", "max tokens", "maximum context"]
+    },
+    {
+      "type": "model_quota_error",
+      "code": "model_quota_error",
+      "action": "return_error",
+      "patterns": ["quota", "余额", "额度", "insufficient", "billing"]
+    },
+    {
+      "type": "model_provider_auth_error",
+      "code": "model_provider_auth_error",
+      "action": "return_error",
+      "patterns": ["上游异常提示\\\\(httpcode:401\\\\)", "invalid api key", "provider api key", "channel api key", "distributor api key", "上游.*401"]
+    },
+    {
+      "type": "model_provider_subscription_error",
+      "code": "model_provider_subscription_error",
+      "action": "return_error",
+      "patterns": ["codingplan", "subscription", "subscribe", "subscribed", "renewal", "renew", "expired", "会员", "订阅", "套餐", "续费", "到期", "过期"]
+    },
+    {
+      "type": "model_not_found_or_no_access",
+      "code": "model_not_found_or_no_access",
+      "action": "return_error",
+      "patterns": ["上游异常提示\\\\(httpcode:404\\\\)", "does not exist", "do not have access", "doesn't exist", "no access", "not found", "模型不存在", "无权访问", "没有权限访问", "无访问权限"]
+    },
+    {
+      "type": "model_no_channel",
+      "code": "model_no_channel",
+      "action": "return_error",
+      "patterns": ["无可用渠道", "distributor", "no available channel", "no channel"]
+    },
+    {
+      "type": "upstream_model_error",
+      "code": "upstream_model_error",
+      "action": "return_error",
+      "patterns": ["upstream", "provider", "上游", "模型服务繁忙", "服务繁忙", "繁忙", "busy", "request failed", "failed", "failure", "server error", "internal server error", "provider.*error", "upstream.*error"]
+    }
+  ]
+}

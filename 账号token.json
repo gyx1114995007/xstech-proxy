@@ -1,0 +1,13 @@
+{
+  "accounts": {
+    "acc_0": {
+      "key": "acc_0",
+      "index": 0,
+      "account": "1114995007@qq.com",
+      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjIzNzU2LCJzaWduIjoiMjJjMGMwODE1NTMyMGI4Yzc3ZjkxNDdjNWZiMWExNTciLCJyb2xlIjoidXNlciIsImV4cCI6MTc4MTMzNzA2OSwibmJmIjoxNzgwNzMyMjY5LCJpYXQiOjE3ODA3MzIyNjl9.-jqXMTgD9J1DCupqeNCmYGu40zf8A6q_mxFanZqDQPs",
+      "exp": 1781337069,
+      "最后刷新": 1780732269459,
+      "updatedAt": "2026-06-06T11:01:54.704Z"
+    }
+  }
+}
