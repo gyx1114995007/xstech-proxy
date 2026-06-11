@@ -107,7 +107,9 @@ function 预替换(text) {
 }
 
 async function 被拦(_token, model, text, accountKey) {
-  const 探测模型 = 配置.误判检测探测模型 || model;
+  const 探测模型配置 = 配置.误判检测探测模型 || model;
+  // 转换为内部模型ID（支持对外名称如 glm-5-1 → 国产::GLM-5.1）
+  const 探测模型 = 模型映射.toXstechModel(探测模型配置) || 探测模型配置;
   const 探测账号 = accountKey
     ? { key: accountKey }
     : await 账号池.选择账号();
