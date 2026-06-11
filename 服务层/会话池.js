@@ -164,6 +164,7 @@ async function 获取会话(a, b) {
   const m = model || 默认模型;
   池[key][m] = 池[key][m] || [];
 
+  // 第1步：尝试获取当前模型的空闲会话
   for (const s of 池[key][m]) {
     if (!s.used && 内存锁.acquire(锁名(key, s.id), 3600)) {
       s.used = true; s.获取时间 = Date.now();
@@ -172,33 +173,36 @@ async function 获取会话(a, b) {
     }
   }
 
-  if (总数(key) >= 账号状态[key].当前池大小上限) {
-    尝试扩容池上限(key, '无空闲会话');
-  }
-
-  if (总数(key) >= 账号状态[key].当前池大小上限) {
-    for (const [其他模型, list] of Object.entries(池[key])) {
-      for (const s of list) {
-        if (!s.used && 内存锁.acquire(锁名(key, s.id), 3600)) {
-          s.used = true; s.获取时间 = Date.now();
-          if (其他模型 !== m) {
-            try {
-              await 账号池.带Token重试(key, token => 请求转发.更新会话(token, { id: s.id, model: m, ...默认参数 }));
-              s.model = m;
-              list.splice(list.indexOf(s), 1);
-              池[key][m] = 池[key][m] || [];
-              池[key][m].push(s);
-              日志.info('会话池', '[' + key + '] 会话 ' + s.id + ' 模型切换: ' + 其他模型 + ' → ' + m);
-              await 持久化();
-            } catch (err) { 日志.warn('会话池', '[' + key + '] 模型切换失败: ' + (err.message || '')); }
-          }
-          return s;
-        }
+  // 第2步：当前模型无空闲会话，尝试跨模型复用（优先，不管池是否满）
+  for (const [其他模型, list] of Object.entries(池[key])) {
+    if (其他模型 === m) continue; // 跳过当前模型（已经检查过了）
+    for (const s of list) {
+      if (!s.used && 内存锁.acquire(锁名(key, s.id), 3600)) {
+        s.used = true; s.获取时间 = Date.now();
+        try {
+          await 账号池.带Token重试(key, token => 请求转发.更新会话(token, { id: s.id, model: m, ...默认参数 }));
+          s.model = m;
+          list.splice(list.indexOf(s), 1);
+          池[key][m] = 池[key][m] || [];
+          池[key][m].push(s);
+          日志.info('会话池', '[' + key + '] 会话 ' + s.id + ' 模型切换: ' + 其他模型 + ' → ' + m);
+          await 持久化();
+        } catch (err) { 日志.warn('会话池', '[' + key + '] 模型切换失败: ' + (err.message || '')); }
+        return s;
       }
     }
-    throw new Error('会话池已满: ' + key);
   }
 
+  // 第3步：所有会话都在使用中，检查是否可以创建新会话
+  if (总数(key) >= 账号状态[key].当前池大小上限) {
+    尝试扩容池上限(key, '所有会话都在使用中');
+  }
+
+  if (总数(key) >= 账号状态[key].当前池大小上限) {
+    throw new Error('会话池已满且所有会话都在使用中: ' + key + ' (' + 总数(key) + '/' + 账号状态[key].当前池大小上限 + ')');
+  }
+
+  // 第4步：创建新会话
   const s = await 创建新会话(key, m);
   池[key][m].push(s);
   内存锁.acquire(锁名(key, s.id), 3600);
