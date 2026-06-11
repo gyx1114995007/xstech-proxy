@@ -1267,4 +1267,76 @@ router.post('/maintenance/sign-now', async (_req, res) => {
   }
 });
 
+router.post('/sessions/delete-batch', async (req, res) => {
+  try {
+    const accountKey = (req.body && req.body.accountKey) || 'acc_0';
+    const count = Number(req.body && req.body.count) || 0;
+    if (count <= 0 || count > 500) {
+      return OpenAI错误.返回错误(res, 400, {
+        message: '删除数量必须在 1-500 之间',
+        type: 'invalid_request_error',
+        code: 'invalid_delete_count',
+      });
+    }
+    
+    日志.info('维护接口', `批量删除会话: ${accountKey} count=${count}`);
+    
+    // 获取该账号的会话详情
+    const detail = 会话池.获取会话详情 ? 会话池.获取会话详情(accountKey, '', 500) : null;
+    if (!detail || !detail.accounts || detail.accounts.length === 0) {
+      return OpenAI错误.返回错误(res, 404, {
+        message: '未找到该账号的会话',
+        type: 'invalid_request_error',
+        code: 'account_sessions_not_found',
+      });
+    }
+    
+    const account = detail.accounts[0];
+    const allSessions = [];
+    for (const m of account.byModel || []) {
+      allSessions.push(...(m.sessions || []));
+    }
+    
+    if (allSessions.length === 0) {
+      return res.json({
+        ok: true,
+        action: 'delete-sessions-batch',
+        accountKey,
+        requested: count,
+        deleted: 0,
+        message: '该账号没有会话可删除',
+      });
+    }
+    
+    // 取前N个会话ID
+    const toDelete = allSessions.slice(0, count).map(s => s.id);
+    
+    // 调用批量删除
+    await 账号池.带Token重试(accountKey, token => 请求转发.批量删除会话(token, toDelete));
+    
+    事件中心.记录事件('sessions_batch_deleted', '批量删除会话', {
+      accountKey,
+      requested: count,
+      deleted: toDelete.length,
+    }, 'WARN');
+    
+    res.json({
+      ok: true,
+      action: 'delete-sessions-batch',
+      accountKey,
+      requested: count,
+      deleted: toDelete.length,
+      message: `已删除 ${toDelete.length} 个会话`,
+    });
+  } catch (err) {
+    日志.error('维护接口', '批量删除会话失败: ' + (err.message || ''));
+    OpenAI错误.返回错误(res, 500, {
+      message: err.message || '批量删除会话失败',
+      type: 'server_error',
+      code: 'delete_sessions_batch_failed',
+      detail: 脱敏错误摘要(err),
+    });
+  }
+});
+
 module.exports = router;
