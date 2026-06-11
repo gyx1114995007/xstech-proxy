@@ -23,14 +23,15 @@ async function 解析ChatSSE(stream, handlers = {}) {
     for (const choice of choices) {
       const delta = choice.delta || {};
       if (typeof delta.content === 'string' && delta.content) {
-        // 过滤所有零宽字符和不可见字符
+        // 过滤所有零宽字符、不可见字符和控制字符
         const cleanContent = delta.content
-          .replace(/\u200B/g, '')  // 零宽空格
-          .replace(/\u200C/g, '')  // 零宽非连接符
-          .replace(/\u200D/g, '')  // 零宽连接符
-          .replace(/\uFEFF/g, '')  // 零宽非断空格(BOM)
-          .replace(/\u2060/g, '')  // 字连接符
-          .replace(/[\u180E\u00AD]/g, '');  // 其他不可见字符
+          // 零宽字符
+          .replace(/[\u200B-\u200D\uFEFF]/g, '')
+          // 其他不可见字符
+          .replace(/[\u00AD\u061C\u180E\u2060-\u2069]/g, '')
+          // 所有Unicode不可见分隔符和格式字符（通用方案）
+          .replace(/[\p{Cf}\p{Zl}\p{Zp}]/gu, '');
+        if (!cleanContent) return;
         state.content += cleanContent;
         if (handlers.onTextDelta) await handlers.onTextDelta(cleanContent, json, state);
       }
