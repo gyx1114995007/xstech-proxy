@@ -13,16 +13,12 @@ RUN npm install --production
 # 复制所有文件
 COPY . .
 
-# 暴露端口
+# Zeabur默认使用8080端口，同时暴露3000以防万一
+EXPOSE 8080
 EXPOSE 3000
 
-# 环境变量（Zeabur会自动设置PORT）
+# 环境变量
 ENV NODE_ENV=production
-ENV PORT=3000
 
-# Zeabur会使用自己的健康检查，这里注释掉
-# HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-#   CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 3000) + '/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"
-
-# 启动服务
+# 启动服务（服务会自动读取Zeabur的PORT环境变量）
 CMD ["node", "index.js"]
