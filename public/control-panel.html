@@ -117,6 +117,7 @@
       <button class="tab" data-group="core" data-short="账" onclick="showTab('accounts', this)">账号</button>
       <button class="tab" data-group="core" data-short="积" onclick="showTab('billing', this)">积分</button>
 <button class="tab" data-group="core" data-short="模" onclick="showTab('models', this)">模型</button>
+<button class="tab" data-group="core" data-short="话" onclick="showTab('sessions', this)">会话池</button>
 
 <button class="tab" data-group="ops" data-short="配" onclick="showTab('config', this)">配置</button>
 <button class="tab" data-group="ops" data-short="备" onclick="showTab('backup', this)">备份</button>
@@ -209,9 +210,17 @@
         <div class="small" style="margin-bottom:8px">当前可用的所有模型及其价格信息。</div>
         <div id="modelsListBox"><div class="small">未加载</div></div>
       </section>
-    </div>
+</div>
 
-    <div id="tab-config" class="tabPage grid hide" style="margin-top:8px">
+<div id="tab-sessions" class="tabPage grid hide" style="margin-top:8px">
+<section class="card wide">
+<h2>会话池管理 <button class="mini-btn" onclick="loadSessionsTab()">刷新</button></h2>
+<div class="small" style="margin-bottom:12px">管理各账号的会话池，支持批量删除。</div>
+<div id="sessionsBox"><div class="small">未加载</div></div>
+</section>
+</div>
+
+<div id="tab-config" class="tabPage grid hide" style="margin-top:8px">
       <section class="card span6">
         <h2>运行配置</h2>
         <div class="stack">
@@ -688,6 +697,7 @@ document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
 if (btn) btn.classList.add('active');
 if (name === 'config') loadRuntimeConfig();
 if (name === 'models') loadModelsTab();
+if (name === 'sessions') loadSessionsTab();
 }
 
 async function refreshAll(silent=false){
@@ -1258,6 +1268,58 @@ box.innerHTML = `<table><thead><tr><th>模型ID</th><th>提供商</th><th>价格
   }).join('') + 
   `</tbody></table>`;
 }catch(e){ showBoxError('modelsListBox', '加载模型列表失败', e); }
+}
+
+async function loadSessionsTab(){
+try{
+const data = await getJson('/debug/sessions/detail', true);
+const accounts = data?.detail?.accounts || [];
+const box = $('sessionsBox');
+if(!accounts.length){
+box.innerHTML = '<div class="small">无账号数据</div>';
+return;
+}
+box.innerHTML = accounts.map(acc => {
+const models = acc.byModel || [];
+return `<div style="margin-bottom:16px">
+<h3>${esc(acc.accountKey)} 
+<span class="tag">${acc.total}个会话</span>
+<span class="tag ${acc.idle > 0 ? 'ok' : ''}">${acc.idle}空闲</span>
+<span class="tag">${acc.using}使用中</span>
+<button class="mini-btn" onclick="deleteSessionsBatch('${esc(acc.accountKey)}')">批量删除</button>
+</h3>
+<table class="data-table"><thead><tr>
+<th>模型</th><th>总数</th><th>空闲</th><th>使用中</th>
+</tr></thead><tbody>${models.map(m => `<tr>
+<td>${esc(m.model)}</td>
+<td>${m.total}</td>
+<td>${m.idle}</td>
+<td>${m.using}</td>
+</tr>`).join('')}</tbody></table>
+</div>`;
+}).join('');
+}catch(e){ showBoxError('sessionsBox', '加载会话池失败', e); }
+}
+
+async function deleteSessionsBatch(accountKey){
+const count = prompt(`请输入要删除的会话数量（1-500）\n\n账号: ${accountKey}`, '100');
+if(!count) return;
+const num = Number(count);
+if(isNaN(num) || num < 1 || num > 500){
+alert('删除数量必须在 1-500 之间');
+return;
+}
+if(!confirm(`确认删除账号 ${accountKey} 的 ${num} 个会话？`)) return;
+try{
+showLoading();
+const result = await postJson('/debug/sessions/delete-batch', {accountKey, count: num});
+toast(`已删除 ${result.deleted} 个会话`, 'ok');
+loadSessionsTab();
+}catch(e){
+toast('删除失败: ' + errorText(e), 'bad');
+}finally{
+hideLoading();
+}
 }
 
 function renderRuntimeConfigHistory(data){
