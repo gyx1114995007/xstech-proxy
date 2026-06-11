@@ -1,0 +1,51 @@
+{
+    "projectType": "node",
+    "title": "Node.js 项目",
+    "description": "使用 npm 管理依赖，适用于后端开发和构建工具",
+    "server": {
+        "enabled": false,
+        "port": 3000,
+        "autoStart": false
+    },
+    "preview": {
+        "type": "terminal",
+        "url": "http://localhost:3000",
+        "showPreviewButton": true,
+        "previewButtonLabel": "浏览器预览"
+    },
+    "commands": [
+        {
+            "id": "npm_init",
+            "label": "npm init -y",
+            "command": "npm init -y",
+            "workingDir": ".",
+            "shell": true
+        },
+        {
+            "id": "npm_install",
+            "label": "npm install",
+            "command": "npm install",
+            "workingDir": ".",
+            "shell": true
+        },
+        {
+            "id": "npm_start",
+            "label": "npm start",
+            "command": "npm start",
+            "workingDir": ".",
+            "shell": true,
+            "usesDedicatedSession": true,
+            "sessionTitle": "npm start"
+        },
+        {
+            "id": "npm_test",
+            "label": "npm test",
+            "command": "npm test",
+            "workingDir": ".",
+            "shell": true
+        }
+    ],
+    "export": {
+        "enabled": false
+    }
+}

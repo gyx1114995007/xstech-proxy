@@ -1,0 +1,1965 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>xs中转站控制面板</title>
+  <style>
+    :root {
+      --bg:#07111f; --bg2:#0f172a; --card:#101827; --card2:#0b1220;
+      --text:#e5e7eb; --muted:#94a3b8; --line:#243044;
+      --accent:#38bdf8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --btn:#1f2937; --primary:#2563eb;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:radial-gradient(circle at top,#172554 0,#07111f 42%,#020617 100%);color:var(--text);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    body{font-size:13px}
+    .hide{display:none!important}
+    .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px}
+    .login-card{width:min(440px,100%);background:linear-gradient(180deg,rgba(16,24,39,.96),rgba(11,18,32,.96));border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 24px 80px rgba(0,0,0,.34)}
+    .login-title{font-size:22px;font-weight:800;margin:0 0 6px}
+    .login-sub{color:var(--muted);line-height:1.5;margin-bottom:14px}
+    header{position:sticky;top:0;z-index:10;background:rgba(2,6,23,.84);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 12px}
+    .top{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .brand{min-width:0}
+    h1{font-size:16px;margin:0;white-space:nowrap}
+    .sub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    main{max-width:1200px;margin:0 auto;padding:10px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .card{background:linear-gradient(180deg,rgba(16,24,39,.96),rgba(11,18,32,.94));border:1px solid var(--line);border-radius:14px;padding:10px;box-shadow:0 14px 34px rgba(0,0,0,.18);min-width:0}
+    .wide{grid-column:1/-1}
+    h2{font-size:13px;margin:0 0 8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+    h3{font-size:12px;margin:8px 0 6px;color:var(--muted);font-weight:600}
+    .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+    .stack{display:grid;gap:7px}
+    input,button,select,textarea{border-radius:10px;border:1px solid var(--line);background:#020617;color:var(--text);padding:8px 9px;font-size:13px;min-width:0}
+    input,select{width:100%}
+    button{background:var(--btn);cursor:pointer;touch-action:manipulation;white-space:nowrap}
+    button.primary{background:var(--primary);border-color:#3b82f6}
+    button.danger{background:#7f1d1d;border-color:#991b1b}
+    button.ghost{background:#020617}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .mini-btn{padding:5px 7px;border-radius:8px;font-size:12px}
+    .kv{display:grid;grid-template-columns:76px minmax(0,1fr);gap:5px 8px;font-size:12px}
+    .k{color:var(--muted)}
+    .v{min-width:0;overflow:hidden;text-overflow:ellipsis}
+    .pill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:3px 7px;font-size:11px;color:var(--muted);margin:2px}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+    .muted{color:var(--muted)} .small{font-size:11px;color:var(--muted);line-height:1.45}
+    pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#020617;border:1px solid var(--line);border-radius:10px;padding:8px;color:#d1d5db;max-height:260px;overflow:auto;font-size:11px}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left;vertical-align:top}
+    th{color:var(--muted);font-weight:500}
+    .account-card{border:1px solid var(--line);border-radius:12px;background:#07111f;padding:8px;margin-top:6px}
+    .account-head{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+    .account-name{font-weight:700;word-break:break-all}
+    .form2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+    .toast{position:fixed;left:10px;right:10px;bottom:12px;background:#020617;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:none;z-index:30;box-shadow:0 18px 60px rgba(0,0,0,.35)}
+    .tabs{position:sticky;top:58px;z-index:9;display:flex;gap:6px;overflow:auto;padding:6px 0 7px;margin:-2px 0 6px;background:linear-gradient(180deg,rgba(7,17,31,.96),rgba(7,17,31,.82));backdrop-filter:blur(10px);scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+    .tabs::-webkit-scrollbar{display:none}
+    .tab{flex:0 0 auto;padding:6px 9px;border-radius:999px;border:1px solid var(--line);background:#020617;color:var(--muted);font-size:12px;scroll-snap-align:start;box-shadow:inset 0 0 0 1px rgba(255,255,255,.01)}
+    .tab[data-group="core"]{border-color:#1e3a8a}
+    .tab[data-group="ops"]{border-color:#374151}
+    .tab[data-group="data"]{border-color:#164e63}
+    .tab.active{color:var(--text);border-color:var(--accent);background:linear-gradient(180deg,#075985,#0f172a);box-shadow:0 0 0 1px rgba(56,189,248,.28),0 8px 22px rgba(0,0,0,.22)}
+    .tab::before{content:attr(data-short);display:none}
+    @media (min-width:760px){
+      body{font-size:14px}
+      .grid{grid-template-columns:repeat(12,minmax(0,1fr));gap:10px}
+      .span3{grid-column:span 3}.span4{grid-column:span 4}.span5{grid-column:span 5}.span6{grid-column:span 6}.span7{grid-column:span 7}.span8{grid-column:span 8}.wide{grid-column:1/-1}
+      h1{font-size:18px}.card{padding:12px}.kv{grid-template-columns:110px minmax(0,1fr)}
+      .toast{left:auto;right:18px;max-width:460px}
+    }
+    @media (max-width:420px){
+      main{padding:8px}.card{padding:9px;border-radius:12px}.grid{gap:7px}
+      .form2{grid-template-columns:1fr}
+      .top-actions button{padding:7px 8px;font-size:12px}
+      .tabs{top:52px;margin-left:-8px;margin-right:-8px;padding-left:8px;padding-right:8px}
+      .tab{padding:6px 8px;font-size:11px}
+      .kv{grid-template-columns:68px minmax(0,1fr)}
+      th,td{padding:5px 3px}
+    }
+  </style>
+</head>
+<body>
+<section id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="login-title">xs中转站</div>
+    <div class="login-sub">请输入 API Key 鉴权。鉴权通过后才会进入控制面板；Key 仅保存在当前浏览器 localStorage。</div>
+    <div class="stack">
+      <input id="loginKey" type="password" placeholder="API Key，例如 sk-..." autocomplete="current-password" />
+      <div class="row">
+        <button class="primary" onclick="login()">进入控制面板</button>
+        <button onclick="toggleLoginKey()">显示/隐藏</button>
+      </div>
+      <div id="loginMsg" class="small"></div>
+    </div>
+  </div>
+</section>
+
+<section id="appView" class="hide">
+  <header>
+    <div class="top">
+      <div class="brand">
+        <h1>xs中转站控制面板</h1>
+        <div class="sub">紧凑运维面板 · NewAPI → xstech.one</div>
+      </div>
+      <div class="row top-actions">
+        <button class="mini-btn primary" onclick="refreshAll()">刷新</button>
+        <button class="mini-btn ghost" onclick="logout()">退出</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="tabs">
+      <button class="tab active" data-group="core" data-short="概" onclick="showTab('overview', this)">概览</button>
+      <button class="tab" data-group="core" data-short="账" onclick="showTab('accounts', this)">账号</button>
+      <button class="tab" data-group="core" data-short="积" onclick="showTab('billing', this)">积分</button>
+<button class="tab" data-group="core" data-short="模" onclick="showTab('models', this)">模型</button>
+
+<button class="tab" data-group="ops" data-short="配" onclick="showTab('config', this)">配置</button>
+<button class="tab" data-group="ops" data-short="备" onclick="showTab('backup', this)">备份</button>
+<button class="tab" data-group="ops" data-short="维" onclick="showTab('ops', this)">维护</button>
+
+<button class="tab" data-group="data" data-short="志" onclick="showTab('logs', this)">日志</button>
+      <button class="tab" data-group="data" data-short="说" onclick="showTab('docs', this)">说明</button>
+      <button class="tab" data-group="data" data-short="原" onclick="showTab('raw', this)">原始</button>
+
+    </div>
+
+    <div id="tab-overview" class="tabPage grid" style="margin-top:8px">
+      <section class="card span3">
+        <h2>健康</h2>
+        <div id="healthBox" class="kv"></div>
+      </section>
+      <section class="card span3">
+        <h2>服务</h2>
+        <div id="serviceBox" class="kv"></div>
+      </section>
+      <section class="card span3">
+        <h2>模型/价格</h2>
+        <div id="modelBox" class="kv"></div>
+      </section>
+      <section class="card span3">
+        <h2>会话池 <button class="mini-btn" onclick="showTab('ops'); loadSessionDetail()">详情</button></h2>
+        <div id="sessionBox" class="kv"></div>
+      </section>
+
+      <section class="card span6">
+        <h2>请求指标 <button class="mini-btn" onclick="loadMetricsTrend()">趋势刷新</button></h2>
+<div id="requestMetrics"></div>
+      </section>
+      <section class="card span6">
+        <h2>自动签到 <button class="mini-btn primary" onclick="postAction('/debug/maintenance/sign-now')">立即签到</button></h2>
+        <div id="autoSignBox"></div>
+      </section>
+
+      <section class="card wide">
+         <h2>上游网络检测 <button class="mini-btn" onclick="runUpstreamDiagnostics()">开始检测</button></h2>
+         <div class="small" style="margin-bottom:8px">检测 DNS、HTTPS 基础连通、模型 API、账号套餐 API。默认单项超时 10 秒。</div>
+         <div class="form2" style="margin-bottom:8px">
+           <label class="small">账号<input id="upstreamDiagAccount" placeholder="acc_0" value="acc_0"></label>
+           <label class="small">单项超时毫秒<input id="upstreamDiagTimeout" type="number" min="1000" max="30000" step="500" value="10000"></label>
+         </div>
+        <div id="upstreamDiagnosticsBox"><div class="small">未检测</div></div>
+      </section>
+
+      <section class="card wide">
+<h2>模型价格变化历史 <button class="mini-btn" onclick="loadPriceHistory()">筛选刷新</button></h2>
+<div class="form2" style="margin-bottom:8px">
+  <label class="small">数量<input id="priceHistoryLimit" type="number" min="1" max="500" value="30"></label>
+  <label class="small">模型筛选<input id="priceHistoryModel" placeholder="如 gpt / claude / gemini"></label>
+</div>
+<h3>变化摘要</h3>
+<pre id="priceHistorySummaryBox">未加载</pre>
+<h3>历史明细</h3>
+<pre id="priceHistoryBox">未加载</pre>
+      </section>
+      <section class="card wide">
+        <h2>最近请求</h2>
+        <div id="recentRequests"></div>
+      </section>
+
+    </div>
+
+    <div id="tab-accounts" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card span5">
+        <h2>新增账号</h2>
+        <div class="stack">
+          <input id="newAccount" placeholder="xstech 账号/邮箱" autocomplete="username" />
+          <input id="newPassword" type="password" placeholder="密码" autocomplete="new-password" />
+          <label class="small"><input id="newLogin" type="checkbox" checked style="width:auto;vertical-align:middle" /> 新增后立即登录验证并获取 token</label>
+          <div class="row">
+            <button class="primary" onclick="addAccount()">增加账号</button>
+            <button onclick="toggleNewPassword()">显示/隐藏密码</button>
+          </div>
+          <div class="small">账号会保存到服务端 <code>账号列表.json</code>；删除账号会重排 acc_N，并重写 token 文件避免错配。</div>
+        </div>
+      </section>
+      <section class="card span7">
+        <h2>账号状态 <span id="accountCount" class="small"></span></h2>
+        <div id="accountsBox"></div>
+      </section>
+    </div>
+
+    <div id="tab-models" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card wide">
+        <h2>模型列表 <button class="mini-btn" onclick="loadModelsTab()">刷新</button></h2>
+        <div class="small" style="margin-bottom:8px">当前可用的所有模型及其价格信息。</div>
+        <div id="modelsListBox"><div class="small">未加载</div></div>
+      </section>
+    </div>
+
+    <div id="tab-config" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card span6">
+        <h2>运行配置</h2>
+        <div class="stack">
+          <label class="small">模型刷新间隔秒<input id="cfgModelRefresh" type="number" min="30" step="30"></label>
+          <label class="small">会话同步间隔分钟<input id="cfgSessionSync" type="number" min="1" step="1"></label>
+          <label class="small">Token 检查间隔秒<input id="cfgTokenCheck" type="number" min="5" step="5"></label>
+          <label class="small">Token 提前刷新窗口秒<input id="cfgTokenBefore" type="number" min="0" step="30"></label>
+          <label class="small">自动签到间隔小时<input id="cfgSignHours" type="number" min="1" step="1"></label>
+          <label class="small">自动签到启动延迟秒<input id="cfgSignDelay" type="number" min="0" step="1"></label>
+          <label class="small"><input id="cfgSignEnabled" type="checkbox" style="width:auto;vertical-align:middle"> 启用自动签到</label>
+
+          <label class="small">日志级别
+            <select id="cfgLogLevel">
+              <option>DEBUG</option><option>INFO</option><option>WARN</option><option>ERROR</option>
+            </select>
+          </label>
+          <label class="small">误判检测探测模型
+            <select id="cfgCensorProbeModel">
+              <option value="">（默认）使用触发误判的模型</option>
+            </select>
+          </label>
+          <h3>企业微信通知</h3>
+          <label class="small"><input id="cfgNotifyEnabled" type="checkbox" style="width:auto;vertical-align:middle"> 启用通知</label>
+          <label class="small">Webhook URL<input id="cfgWeworkWebhook" type="password" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."></label>
+          <label class="small"><input id="cfgNotifyModelChange" type="checkbox" style="width:auto;vertical-align:middle"> 通知模型新增/下线/积分变化</label>
+          <label class="small"><input id="cfgNotifyFailure" type="checkbox" style="width:auto;vertical-align:middle"> 启用失败类通知总开关</label>
+          <label class="small"><input id="cfgNotifyAccountFailure" type="checkbox" style="width:auto;vertical-align:middle"> 通知账号异常/临时暂停</label>
+          <label class="small"><input id="cfgNotifyUpstreamFailure" type="checkbox" style="width:auto;vertical-align:middle"> 通知上游连续失败</label>
+          <label class="small"><input id="cfgNotifyLowBalance" type="checkbox" style="width:auto;vertical-align:middle"> 通知账号余额过低</label>
+          <div class="form2">
+            <label class="small">低余额阈值<input id="cfgLowBalanceThreshold" type="number" min="0" step="1000"></label>
+            <label class="small">通知冷却毫秒<input id="cfgNotifyCooldownMs" type="number" min="60000" step="60000"></label>
+          </div>
+          <div class="row">
+            <button class="primary" onclick="saveRuntimeConfig()">保存并立即应用</button>
+            <button onclick="loadRuntimeConfig()">重新读取</button>
+            <button onclick="loadRuntimeConfigHistory()">配置历史</button>
+            <button class="danger" onclick="resetRuntimeConfig()">恢复默认</button>
+            <button onclick="testNotify()">发送测试通知</button>
+          </div>
+
+          <div class="small">这些参数会保存到 <code>运行配置.json</code>，并立即重载对应定时器。</div>
+        </div>
+      </section>
+      <section class="card span6">
+        <h2>配置状态</h2>
+        <pre id="runtimeConfigBox">未加载</pre>
+      </section>
+      <section class="card wide">
+        <h2>配置变更历史 <button class="mini-btn" onclick="loadRuntimeConfigHistory()">刷新</button></h2>
+        <div class="small" style="margin-bottom:6px">记录保存和恢复默认操作，便于追踪误改。</div>
+        <div id="runtimeConfigHistoryBox"><div class="small">未加载</div></div>
+      </section>
+      <section class="card wide">
+        <h2>误判词 JSON <button class="mini-btn" onclick="loadCensorRules()">读取/刷新</button></h2>
+<div class="small" style="margin-bottom:6px">在线编辑 <code>误判词.json</code>。保存前会校验 JSON，服务端会自动备份旧文件并立即重载规则。</div>
+<div class="row" style="margin-bottom:8px">
+  <button onclick="validateCensorRulesEditor()">格式化/校验 JSON</button>
+  <button class="primary" onclick="saveCensorRules()">保存误判词规则</button>
+</div>
+<textarea id="censorRulesEditor" rows="12" placeholder='例如：{"词表":{"敏感词":"敏\u200b感\u200b词"}}'></textarea>
+<pre id="censorRulesBox">未加载</pre>
+      </section>
+    </div>
+
+    <div id="tab-backup" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card wide">
+        <h2>一键备份 <span class="small bad">包含敏感数据</span></h2>
+        <div class="small" style="margin-bottom:8px">
+          备份包可能包含 xstech 账号密码、token、运行配置、误判词、模型价格等，请妥善保存，不要外泄。
+        </div>
+<div class="row">
+<button class="primary" onclick="loadBackupFiles()">刷新备份清单</button>
+          <button onclick="exportBackup()">导出全部备份 JSON</button>
+        </div>
+      </section>
+      <section class="card span6">
+        <h2>备份文件清单</h2>
+        <div id="backupFilesBox" class="small">未加载</div>
+      </section>
+      <section class="card span6">
+<h2>文件内容预览</h2>
+<pre id="backupPreviewBox">未加载</pre>
+</section>
+<section class="card wide">
+<h2>备份恢复预览 / 选择性恢复 <span class="small bad">谨慎操作</span></h2>
+<div class="small" style="margin-bottom:8px">
+恢复不会默认全量覆盖；必须显式填写要恢复的文件名。执行恢复前，服务端会自动把当前文件备份为 <code>.restore-backup-*</code>。
+</div>
+<div class="stack">
+<textarea id="backupRestoreJson" rows="7" placeholder="粘贴 xs-backup-*.json 备份内容"></textarea>
+<input id="backupRestoreFiles" placeholder="要恢复的文件名，逗号或换行分隔；例如：运行配置.json, 误判词.json">
+<div class="row">
+<button onclick="previewBackupRestore()">预览恢复差异</button>
+<button class="danger" onclick="applyBackupRestore()">执行选择性恢复</button>
+</div>
+<div id="backupRestoreResultBox"><div class="small">未预览</div></div>
+</div>
+</section>
+</div>
+
+    <div id="tab-billing" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card span6">
+        <h2>积分商品</h2>
+        <div class="account-card" style="margin-top:0">
+          <div class="account-head">
+            <div>
+              <div class="account-name" id="billingAccountTitle">未选择账号</div>
+              <div class="small" id="billingAccountDesc">请从“账号”页点击某个账号的“积分/购买”进入</div>
+            </div>
+            <span class="pill" id="billingAccountPill">未绑定</span>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button class="primary" onclick="loadBillingProducts()">刷新商品</button>
+          <button onclick="loadBillingPlans()">刷新余额/套餐</button>
+        </div>
+        <div class="small" style="margin-top:6px">创建订单只会生成 xstech 支付链接，不会自动付款。</div>
+        <div id="billingProductsBox" style="margin-top:8px"></div>
+      </section>
+      <section class="card span6">
+        <h2>订单/套餐</h2>
+        <div id="billingPlansBox" class="account-card" style="margin-top:0;margin-bottom:8px">
+          <div class="small">余额/套餐未加载</div>
+        </div>
+        <div class="stack">
+          <div class="form2">
+<input id="billingProductId" placeholder="商品 productId">
+<select id="billingMethod" title="支付方式">
+<option value="ALIPAY">支付宝</option>
+<option value="EASY-wxpay">微信支付</option>
+</select>
+</div>
+          <div class="row">
+            <button class="primary" onclick="createBillingOrder()">创建订单</button>
+          </div>
+          <div class="form2">
+            <input id="billingCancelOrderNo" placeholder="要取消的 orderNo">
+            <button onclick="cancelBillingOrder()">取消订单</button>
+          </div>
+        </div>
+
+        <div id="billingPayBox" style="margin-top:8px"></div>
+        <pre id="billingResultBox" style="margin-top:8px">未加载</pre>
+
+      </section>
+      <section class="card wide">
+        <h2>最近订单历史</h2>
+        <div class="row">
+          <button onclick="loadBillingOrders()">刷新订单历史</button>
+        </div>
+        <div id="billingOrdersBox" style="margin-top:8px">
+          <div class="small">未加载</div>
+        </div>
+      </section>
+    </div>
+
+    <div id="tab-ops" class="tabPage grid hide" style="margin-top:8px">
+
+      <section class="card wide">
+        <h2>维护操作</h2>
+        <div class="row">
+          <button onclick="postAction('/debug/maintenance/refresh-models')">刷新模型/价格</button>
+          <button onclick="postAction('/debug/maintenance/sync-sessions')">同步会话</button>
+          <button onclick="refreshTokenPrompt()">刷新 Token</button>
+          <button onclick="postAction('/debug/maintenance/reload-model-stream-error-rules')">重载错误规则</button>
+          <button onclick="loadUnclassified()">查看未分类错误</button>
+          <button class="danger" onclick="clearUnclassified()">清空未分类样例</button>
+        </div>
+      </section>
+      <section class="card wide">
+        <h2>部署/进程状态 <button class="mini-btn" onclick="loadDeployStatus()">刷新</button></h2>
+        <div class="small" style="margin-bottom:8px">显示当前 Node 进程、端口监听与端口占用排查信息。停止/重启请在终端或进程管理器中执行。</div>
+        <div id="deployStatusBox"><div class="small">未加载</div></div>
+      </section>
+      <section class="card wide">
+        <h2>会话池详情 <button class="mini-btn" onclick="loadSessionDetail()">筛选刷新</button></h2>
+        <div class="small" style="margin-bottom:8px">只读取本地内存会话池，不访问上游。可配合“同步会话”刷新云端状态。</div>
+        <div class="form2" style="margin-bottom:8px">
+          <label class="small">账号<input id="sessionDetailAccount" placeholder="留空=全部，例如 acc_0"></label>
+          <label class="small">模型<input id="sessionDetailModel" placeholder="留空=全部，例如 openai::gpt-5.5"></label>
+        </div>
+        <div class="form2" style="margin-bottom:8px">
+          <label class="small">每模型样例数<input id="sessionDetailLimit" type="number" min="1" max="200" value="20"></label>
+          <label class="small">操作<button onclick="postAction('/debug/maintenance/sync-sessions').then(()=>loadSessionDetail())">同步后刷新详情</button></label>
+        </div>
+        <div id="sessionDetailBox"><div class="small">未加载</div></div>
+      </section>
+      <section class="card wide">
+        <h2>数据文件健康检查 <button class="mini-btn" onclick="loadFilesHealth(false)">检查</button></h2>
+        <div class="small" style="margin-bottom:8px">检查关键 JSON / JSONL / 文档文件是否存在、是否可解析、大小与更新时间。</div>
+        <div class="row" style="margin-bottom:8px">
+          <button onclick="loadFilesHealth(false)">只检查</button>
+          <button class="danger" onclick="loadFilesHealth(true)">检查并备份损坏文件</button>
+        </div>
+        <div id="filesHealthBox"><div class="small">未检查</div></div>
+      </section>
+      <section class="card wide">
+        <h2>未分类模型流错误</h2>
+        <pre id="unclassifiedBox">未加载</pre>
+      </section>
+    </div>
+
+    <div id="tab-logs" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card span6">
+<h2>最近日志 <button class="mini-btn" onclick="loadRecentLogs()">筛选刷新</button></h2>
+<div class="form2" style="margin-bottom:8px">
+<label class="small">行数<input id="logLines" type="number" min="1" max="5000" value="200"></label>
+<label class="small">等级
+<select id="logLevelFilter">
+<option value="ALL">全部</option>
+<option value="DEBUG">DEBUG</option>
+<option value="INFO">INFO</option>
+<option value="WARN">WARN</option>
+<option value="ERROR">ERROR</option>
+</select>
+</label>
+</div>
+<input id="logKeyword" placeholder="关键词筛选，例如 ETIMEDOUT / 账号池 / billing">
+<pre id="recentLogsBox" style="margin-top:8px">未加载</pre>
+</section>
+      <section class="card span6">
+        <h2>事件中心 <button class="mini-btn" onclick="loadRecentEvents()">筛选刷新</button></h2>
+        <div class="form2" style="margin-bottom:8px">
+          <label class="small">数量<input id="eventLimit" type="number" min="1" max="1000" value="100"></label>
+          <label class="small">等级
+            <select id="eventLevelFilter">
+              <option value="ALL">全部</option>
+              <option value="INFO">INFO</option>
+              <option value="WARN">WARN</option>
+              <option value="ERROR">ERROR</option>
+              <option value="FATAL">FATAL</option>
+            </select>
+          </label>
+        </div>
+        <div class="form2" style="margin-bottom:8px">
+          <label class="small">类型<input id="eventTypeFilter" placeholder="如 account_updated / backup_restored"></label>
+          <label class="small">关键词<input id="eventKeyword" placeholder="关键词筛选"></label>
+        </div>
+        <h3>事件统计</h3>
+        <pre id="eventStatsBox">未加载</pre>
+        <h3>最近异常事件</h3>
+        <pre id="eventAbnormalBox">未加载</pre>
+        <h3>最近事件</h3>
+        <pre id="recentEventsBox">未加载</pre>
+      </section>
+    </div>
+
+    <div id="tab-docs" class="tabPage grid hide" style="margin-top:8px">
+      <section class="card wide">
+        <h2>系统说明 / 版本变更</h2>
+        <div class="small" style="margin-bottom:8px">xs中转站：NewAPI/OpenAI 兼容接口 → xstech.one 上游适配与高级运维面板。</div>
+        <div class="kv" style="margin-bottom:10px"></div>
+        <h3>当前版本</h3>
+        <pre id="systemDocsVersionBox">v21 / 高级运维面板增强版\nP1-P20 已完成；排除项：模型映射手动禁用/别名、安全性敏感字段脱敏/备份二次确认。</pre>
+        <h3>功能分区</h3>
+        <table>
+          <thead><tr><th>分区</th><th>用途</th></tr></thead>
+          <tbody>
+            <tr><td>概览</td><td>健康、服务、请求趋势、自动签到、上游网络检测、价格历史、最近请求</td></tr>
+            <tr><td>账号</td><td>多账号状态、健康评分、启用/禁用、改密、删除、积分摘要</td></tr>
+            <tr><td>积分</td><td>对应账号购买积分、商品、余额套餐、订单、二维码、订单历史</td></tr>
+            <tr><td>配置</td><td>运行配置、通知配置、配置历史、误判词 JSON 在线编辑</td></tr>
+            <tr><td>备份</td><td>关键文件清单、导出、单文件预览、恢复预览、选择性恢复</td></tr>
+            <tr><td>维护</td><td>刷新模型、同步会话、部署状态、会话池详情、数据文件健康</td></tr>
+            <tr><td>日志</td><td>日志筛选、事件筛选、事件统计、最近异常事件</td></tr>
+          </tbody>
+        </table>
+        <h3>关键接口</h3>
+        <pre>GET  /health
+GET  /panel
+GET  /v1/models
+POST /v1/chat/completions
+GET  /debug/status
+GET  /debug/deploy/status
+GET  /debug/files/health
+GET  /debug/upstream/diagnostics
+GET  /debug/metrics/trend
+GET  /debug/sessions/detail
+GET  /debug/billing/plans?all=true
+GET  /debug/logs/recent
+GET  /debug/events/stats
+GET  /debug/backup/export</pre>
+        <h3>运维建议</h3>
+        <ul class="small">
+          <li>上游超时时，优先使用“上游网络检测”区分服务问题与 xstech 网络问题。</li>
+          <li>部署状态中端口 EADDRINUSE 在服务正常运行时通常表示当前服务已监听该端口。</li>
+          <li>恢复备份前先做恢复预览，并只选择必要文件。</li>
+          <li>定期查看数据文件健康，JSON/JSONL 解析失败时先备份再处理。</li>
+          <li>误判词规则保存后会立即重载；新增规则前建议先格式化/校验 JSON。</li>
+        </ul>
+      </section>
+    </div>
+
+    <div id="tab-raw" class="tabPage grid hide" style="margin-top:8px">
+
+      <section class="card wide">
+        <h2>原始状态 JSON</h2>
+        <pre id="rawStatus">未加载</pre>
+      </section>
+      <section class="card wide">
+        <h2>最近操作返回</h2>
+        <pre id="lastResult">暂无</pre>
+      </section>
+    </div>
+  </main>
+</section>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+let statusCache = null;
+let timer = null;
+
+function esc(v) {
+  return String(v ?? '').replace(/[&<>"']/g, m => ({
+    '&': '&' + 'amp;',
+    '<': '&' + 'lt;',
+    '>': '&' + 'gt;',
+    '"': '&' + 'quot;',
+    "'": '&' + '#39;',
+  }[m]));
+}
+function toast(msg, type='') {
+  const el = $('toast');
+  el.textContent = msg;
+  el.style.display = 'block';
+  el.style.borderColor = type === 'bad' ? '#ef4444' : type === 'ok' ? '#22c55e' : '#243044';
+  clearTimeout(window.__toastTimer);
+  window.__toastTimer = setTimeout(() => el.style.display = 'none', 3600);
+}
+function key(){ return localStorage.getItem('xs_panel_api_key') || ''; }
+function setKey(v){ localStorage.setItem('xs_panel_api_key', String(v || '').trim()); }
+function headers(json=false){
+  const h = { Authorization:'Bearer ' + key() };
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+}
+
+function authErrorMessage(err){
+  const code = err?.code || err?.data?.error?.code;
+  if (err?.status === 401 || code === 'missing_authorization') return '登录态已过期或缺少 API Key，请重新登录';
+  if (err?.status === 403 || code === 'invalid_api_key') return 'API Key 无效，请重新输入';
+  return err?.message || '鉴权失败，请重新登录';
+}
+
+function handleAuthExpired(err){
+  localStorage.removeItem('xs_panel_api_key');
+  if (timer) clearInterval(timer);
+  timer = null;
+  if ($('appView')) $('appView').classList.add('hide');
+  if ($('loginView')) $('loginView').classList.remove('hide');
+  if ($('loginMsg')) $('loginMsg').textContent = authErrorMessage(err);
+  toast(authErrorMessage(err), 'bad');
+}
+
+async function parseRes(res){
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch { data = { raw:text }; }
+  if (!res.ok) {
+    const err = new Error(data?.error?.message || data?.error || res.statusText || ('HTTP ' + res.status));
+    err.status = res.status;
+    err.data = data;
+    err.code = data?.error?.code;
+    err.detail = data?.error?.detail;
+    if (res.status === 401 || res.status === 403 || err.code === 'missing_authorization' || err.code === 'invalid_api_key') {
+      handleAuthExpired(err);
+    }
+    throw err;
+  }
+  return data;
+}
+
+function errorText(e){
+  const parts = [];
+  if (e?.message) parts.push(e.message);
+  if (e?.code) parts.push('code=' + e.code);
+  if (e?.status) parts.push('HTTP ' + e.status);
+  const d = e?.detail || e?.data?.error?.detail;
+  const upstream = d?.upstream || e?.data?.error?.upstream;
+  if (d?.code) parts.push(d.code);
+  if (d?.axiosCode && d.axiosCode !== d.code) parts.push(d.axiosCode);
+  if (d?.causeCode && d.causeCode !== d.code && d.causeCode !== d.axiosCode) parts.push(d.causeCode);
+  if (upstream?.code && !parts.includes(upstream.code)) parts.push(upstream.code);
+  if (upstream?.axiosCode && !parts.includes(upstream.axiosCode)) parts.push(upstream.axiosCode);
+  if (upstream?.causeCode && !parts.includes(upstream.causeCode)) parts.push(upstream.causeCode);
+  if (d?.name && !parts.includes(d.name)) parts.push(d.name);
+  return parts.filter(Boolean).join(' · ') || '未知错误';
+}
+
+function compactErrorJson(e){
+  const d = e?.detail || e?.data?.error?.detail;
+  const raw = {
+    message: e?.message,
+    status: e?.status,
+    code: e?.code || e?.data?.error?.code,
+    detail: d,
+    upstream: d?.upstream || e?.data?.error?.upstream,
+    raw: e?.data?.error || e?.data,
+  };
+  Object.keys(raw).forEach(k => raw[k] === undefined && delete raw[k]);
+  return raw;
+}
+
+function errorCard(title, e){
+  const info = compactErrorJson(e);
+  return `
+    <div class="account-card" style="border-color:#7f1d1d;background:#170b0b">
+      <div class="account-name bad">${esc(title)}</div>
+      <div class="small" style="margin-top:6px">${esc(errorText(e))}</div>
+      <div class="kv" style="margin-top:8px">
+        ${kv([
+          ['HTTP', esc(info.status ?? '-')],
+          ['code', esc(info.code ?? '-')],
+          ['upstream', esc(info.upstream?.code || info.upstream?.axiosCode || info.upstream?.causeCode || '-')],
+        ])}
+      </div>
+      <details style="margin-top:8px" open><summary>错误详情</summary><pre style="margin-top:8px;max-height:220px">${esc(JSON.stringify(info, null, 2))}</pre></details>
+    </div>
+  `;
+}
+
+function showBoxError(id, title, e){
+  const box = $(id);
+  if (box) box.innerHTML = errorCard(title, e);
+  if ($('lastResult')) $('lastResult').textContent = JSON.stringify(compactErrorJson(e), null, 2);
+}
+async function getJson(url, auth=true){ return parseRes(await fetch(url, { headers: auth ? headers() : {} })); }
+async function postJson(url, body={}){ return parseRes(await fetch(url, { method:'POST', headers:headers(true), body:JSON.stringify(body) })); }
+
+async function deleteJson(url){ return parseRes(await fetch(url, { method:'DELETE', headers:headers() })); }
+async function patchJson(url, body={}){ return parseRes(await fetch(url, { method:'PATCH', headers:headers(true), body:JSON.stringify(body) })); }
+
+function kv(fields){
+  return fields.map(([k,v,cls]) => `<div class="k">${esc(k)}</div><div class="v ${cls||''}">${v ?? '-'}</div>`).join('');
+}
+function fmtTime(s){ return s ? esc(s).replace('T',' ').replace('.000Z','Z') : '-'; }
+
+async function login(){
+  const val = $('loginKey').value.trim();
+  if (!val) { $('loginMsg').textContent = '请输入 API Key'; return; }
+  setKey(val);
+  $('loginMsg').textContent = '正在验证...';
+  try {
+    await refreshAll(true);
+    $('loginView').classList.add('hide');
+    $('appView').classList.remove('hide');
+    $('loginMsg').textContent = '';
+    toast('鉴权成功', 'ok');
+    startTimer();
+  } catch(e) {
+    $('loginMsg').textContent = authErrorMessage(e);
+    localStorage.removeItem('xs_panel_api_key');
+  }
+}
+function logout(){
+  localStorage.removeItem('xs_panel_api_key');
+  if (timer) clearInterval(timer);
+  timer = null;
+  $('appView').classList.add('hide');
+  $('loginView').classList.remove('hide');
+  $('loginKey').value = '';
+  $('loginMsg').textContent = '已退出，请重新输入 API Key';
+}
+function toggleLoginKey(){ $('loginKey').type = $('loginKey').type === 'password' ? 'text' : 'password'; }
+function toggleNewPassword(){ $('newPassword').type = $('newPassword').type === 'password' ? 'text' : 'password'; }
+function startTimer(){ if (!timer) timer = setInterval(() => refreshAll(false), 30000); }
+
+function showTab(name, btn){
+document.querySelectorAll('.tabPage').forEach(x => x.classList.add('hide'));
+$('tab-' + name).classList.remove('hide');
+document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+if (btn) btn.classList.add('active');
+if (name === 'config') loadRuntimeConfig();
+if (name === 'models') loadModelsTab();
+}
+
+async function refreshAll(silent=false){
+  const [h, s, c] = await Promise.all([
+    getJson('/health', false),
+    getJson('/debug/status', true),
+    getJson('/debug/config', true),
+  ]);
+  renderHealth(h); renderStatus(s); renderRuntimeConfig(c.runtime);
+  if (!silent) toast('状态已刷新', 'ok');
+  return s;
+}
+
+function renderHealth(h){
+  $('healthBox').innerHTML = kv([
+    ['ok', h?.ok ? '<span class="ok">true</span>' : '<span class="bad">false</span>'],
+    ['service', esc(h?.service)],
+    ['uptime', esc(h?.uptimeSec)],
+    ['now', fmtTime(h?.now)],
+  ]);
+}
+function renderStatus(s){
+  statusCache = s;
+  $('rawStatus').textContent = JSON.stringify(s, null, 2);
+
+  $('serviceBox').innerHTML = kv([
+    ['uptime', esc(s.service?.uptimeSec)],
+    ['pid', esc(s.service?.pid)],
+    ['node', esc(s.service?.node)],
+    ['started', fmtTime(s.service?.startedAt)],
+  ]);
+
+  const mm = s.modelMapping || {};
+  const price = mm.price || {};
+  $('modelBox').innerHTML = kv([
+    ['models', esc(mm.count)],
+    ['source', esc(mm.source)],
+    ['price', esc(price.count)],
+    ['changes', `+${esc(price.changes?.added ?? 0)} / -${esc(price.changes?.removed ?? 0)} / Δ${esc(price.changes?.priceChanged ?? 0)}`],
+    ['updated', fmtTime(mm.updatedAt)],
+  ]);
+
+  const ss = s.sessionSummary || {};
+  $('sessionBox').innerHTML = kv([
+    ['total', esc(ss.total)],
+    ['idle', esc(ss.idle)],
+    ['limit', `${esc(ss.currentLimitTotal)} / ${esc(ss.maxLimitTotal)}`],
+    ['min', esc(ss.minLimitTotal)],
+  ]);
+
+  renderRequests(s.metrics?.请求 || {});
+  renderAutoSign(s.autoSign || {});
+  renderAccounts(s.accounts || []);
+  renderRecent(s.metrics?.请求?.最近 || []);
+}
+
+function renderMetricsTrend(trend){
+const rows = (trend && trend.rows) || [];
+const summary = (trend && trend.summary) || {};
+const recentRows = rows.filter(r => (r.总数 || 0) > 0).slice(-12);
+const displayRows = recentRows.length ? recentRows : rows.slice(-6);
+return `
+  <h3>最近 ${esc(trend?.hours || 24)} 小时趋势</h3>
+  <div class="kv" style="margin-bottom:8px">
+    ${kv([
+      ['总请求', esc(summary.总数 ?? 0)],
+      ['成功', `<span class="ok">${esc(summary.成功 ?? 0)}</span>`],
+      ['失败', `<span class="bad">${esc(summary.失败 ?? 0)}</span>`],
+      ['取消', `<span class="warn">${esc(summary.取消 ?? 0)}</span>`],
+      ['错误率', `${esc(summary.错误率 ?? 0)}%`],
+      ['均耗', `${esc(summary.平均耗时Ms ?? 0)}ms`],
+    ])}
+  </div>
+  <table>
+    <thead><tr><th>小时</th><th>总</th><th>成功</th><th>失败</th><th>取消</th><th>错误率</th><th>均耗</th></tr></thead>
+    <tbody>
+      ${displayRows.map(r => `<tr>
+        <td>${esc(String(r.hour || '').replace('T',' ').slice(5,16))}</td>
+        <td>${esc(r.总数 ?? 0)}</td>
+        <td class="ok">${esc(r.成功 ?? 0)}</td>
+        <td class="bad">${esc(r.失败 ?? 0)}</td>
+        <td class="warn">${esc(r.取消 ?? 0)}</td>
+        <td>${esc(r.错误率 ?? 0)}%</td>
+        <td>${esc(r.平均耗时Ms ?? 0)}ms</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+`;
+}
+
+function renderRequests(q){
+  $('requestMetrics').innerHTML = `
+    <span class="pill">总 ${esc(q.总数 ?? 0)}</span>
+    <span class="pill ok">成功 ${esc(q.成功 ?? 0)}</span>
+    <span class="pill bad">失败 ${esc(q.失败 ?? 0)}</span>
+    <span class="pill warn">取消 ${esc(q.取消 ?? 0)}</span>
+    <span class="pill">进行中 ${esc(q.进行中 ?? 0)}</span>
+    <span class="pill">均耗 ${esc(q.平均耗时Ms ?? 0)}ms</span>
+    ${renderMetricsTrend(q.最近24小时趋势 || { hours: 24, summary: {}, rows: [] })}
+    <h3>按模型</h3><pre>${esc(JSON.stringify(q.按模型 || {}, null, 2))}</pre>
+    <h3>按账号</h3><pre>${esc(JSON.stringify(q.按账号 || {}, null, 2))}</pre>
+  `;
+}
+
+async function loadMetricsTrend(){
+try{
+const data = await getJson('/debug/metrics/trend?hours=24', true);
+const q = statusCache?.metrics?.请求 || {};
+q.最近24小时趋势 = data.trend;
+renderRequests(q);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('请求趋势已刷新：最近 ' + (data.trend?.summary?.总数 ?? 0) + ' 次请求', 'ok');
+}catch(e){ showBoxError('requestMetrics', '刷新请求趋势失败', e); toast('刷新请求趋势失败：' + errorText(e), 'bad'); }
+}
+
+function renderUpstreamDiagnostics(data){
+const result = data.result || data;
+const checks = result.checks || [];
+if (!$('upstreamDiagnosticsBox')) return;
+$('upstreamDiagnosticsBox').innerHTML = `
+  <div class="kv" style="margin-bottom:10px">
+    ${kv([
+      ['整体', result.ok ? '<span class="ok">正常</span>' : '<span class="bad">异常</span>'],
+      ['耗时', `${esc(result.durationMs ?? '-')}ms`],
+      ['上游', esc(result.base || '-')],
+      ['建议', esc(result.recommendation || '-')],
+    ])}
+  </div>
+  <table>
+    <thead><tr><th>项目</th><th>结果</th><th>耗时</th><th>状态/错误</th></tr></thead>
+    <tbody>
+      ${checks.map(c => `<tr>
+        <td>${esc(c.name)}</td>
+        <td>${c.ok ? '<span class="ok">OK</span>' : '<span class="bad">FAIL</span>'}${c.skipped ? ' <span class="warn">SKIP</span>' : ''}</td>
+        <td>${esc(c.durationMs ?? 0)}ms</td>
+        <td>${esc(c.status || c.okStatus || c.reason || c.error?.code || c.error?.message || '-')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <details style="margin-top:8px"><summary>原始诊断 JSON</summary><pre>${esc(JSON.stringify(result, null, 2))}</pre></details>
+`;
+}
+
+async function runUpstreamDiagnostics(){
+try{
+if ($('upstreamDiagnosticsBox')) $('upstreamDiagnosticsBox').innerHTML = '<div class="small warn">检测中... 如果上游超时，最多等待约十几秒。</div>';
+const accountKey = $('upstreamDiagAccount') ? ($('upstreamDiagAccount').value.trim() || 'acc_0') : 'acc_0';
+const timeoutMs = $('upstreamDiagTimeout') ? ($('upstreamDiagTimeout').value || 3000) : 3000;
+const qs = new URLSearchParams({ accountKey, timeoutMs });
+const data = await getJson('/debug/upstream/diagnostics?' + qs.toString(), true);
+renderUpstreamDiagnostics(data);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('上游检测完成：' + (data.result?.ok ? '正常' : '异常'), data.result?.ok ? 'ok' : 'bad');
+}catch(e){
+if ($('upstreamDiagnosticsBox')) $('upstreamDiagnosticsBox').innerHTML = errorCard('上游检测失败', e);
+toast('上游检测失败：' + e.message, 'bad');
+}
+}
+
+function renderDeployStatus(data){
+const r = data.result || data;
+const p = r.process || {};
+const c = r.config || {};
+const port = r.port || {};
+if (!$('deployStatusBox')) return;
+$('deployStatusBox').innerHTML = `
+  <div class="kv" style="margin-bottom:10px">
+    ${kv([
+      ['PID', esc(p.pid ?? '-')],
+      ['PPID', esc(p.ppid ?? '-')],
+      ['Node', esc(p.node ?? '-')],
+      ['运行秒', esc(p.uptimeSec ?? '-')],
+      ['平台', `${esc(p.platform || '-')}/${esc(p.arch || '-')}`],
+      ['工作目录', esc(p.cwd || '-')],
+      ['监听', `${esc(c.host || '-')}:${esc(c.port || '-')}`],
+      ['端口状态', port.occupied ? '<span class="warn">已占用/当前服务正在监听</span>' : '<span class="ok">可绑定</span>'],
+      ['Panel', c.panelUrl ? `<a href="${esc(c.panelUrl)}" target="_blank">${esc(c.panelUrl)}</a>` : '-'],
+      ['Health', c.healthUrl ? `<a href="${esc(c.healthUrl)}" target="_blank">${esc(c.healthUrl)}</a>` : '-'],
+    ])}
+  </div>
+  <div class="small" style="margin-bottom:8px">${esc(port.note || '')}</div>
+  <h3>排查命令</h3>
+  <pre>${esc(JSON.stringify(r.commands || {}, null, 2))}</pre>
+  <h3>端口占用信息</h3>
+  ${(port.owners || []).length ? (port.owners || []).map(o => `<details open><summary>${esc(o.command)}</summary><pre>${esc(o.output)}</pre></details>`).join('') : '<div class="small">无额外占用信息</div>'}
+  <details style="margin-top:8px"><summary>原始部署状态 JSON</summary><pre>${esc(JSON.stringify(r, null, 2))}</pre></details>
+`;
+}
+
+async function loadDeployStatus(){
+try{
+if ($('deployStatusBox')) $('deployStatusBox').innerHTML = '<div class="small warn">读取中...</div>';
+const data = await getJson('/debug/deploy/status', true);
+renderDeployStatus(data);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('部署状态已读取：PID ' + (data.result?.process?.pid ?? '-'), 'ok');
+}catch(e){
+showBoxError('deployStatusBox', '读取部署状态失败', e);
+toast('读取部署状态失败：' + errorText(e), 'bad');
+}
+}
+
+function renderSessionDetail(data){
+const detail = data.detail || {};
+const summary = detail.summary || {};
+const accounts = detail.accounts || [];
+if (!$('sessionDetailBox')) return;
+$('sessionDetailBox').innerHTML = `
+  <div class="kv" style="margin-bottom:10px">
+    ${kv([
+      ['账号数', esc(summary.accountCount ?? 0)],
+      ['模型分组', esc(summary.modelCount ?? 0)],
+      ['总会话', esc(summary.total ?? 0)],
+      ['空闲', esc(summary.idle ?? 0)],
+      ['使用中', esc(summary.using ?? 0)],
+      ['上限', `${esc(summary.currentLimitTotal ?? 0)} / ${esc(summary.maxLimitTotal ?? 0)}`],
+    ])}
+  </div>
+  ${(accounts || []).map(acc => `
+    <div class="account-card">
+      <div class="account-head">
+        <div>
+          <div class="account-name">${esc(acc.accountKey)}</div>
+          <div class="small">会话 ${esc(acc.idle)} 空闲 / ${esc(acc.using)} 使用中 / ${esc(acc.total)} 总数 · 上限 ${esc(acc.currentLimit)} / ${esc(acc.maxLimit)}</div>
+        </div>
+        <span class="pill">${esc(acc.modelCount)} 模型</span>
+      </div>
+      ${(acc.byModel || []).map(m => `
+        <details style="margin-top:8px">
+          <summary>${esc(m.model)} · 空闲 ${esc(m.idle)} / 使用中 ${esc(m.using)} / 总 ${esc(m.total)}${m.truncated ? ` · 仅显示 ${esc((m.sessions || []).length)}，省略 ${esc(m.truncated)}` : ''}</summary>
+          <pre style="margin-top:8px;max-height:220px">${esc(JSON.stringify(m.sessions || [], null, 2))}</pre>
+        </details>
+      `).join('') || '<div class="small">该账号暂无会话分组</div>'}
+    </div>
+  `).join('') || '<div class="small">暂无会话详情</div>'}
+`;
+}
+
+async function loadSessionDetail(){
+try{
+const accountKey = $('sessionDetailAccount') ? $('sessionDetailAccount').value.trim() : '';
+const model = $('sessionDetailModel') ? $('sessionDetailModel').value.trim() : '';
+const limit = $('sessionDetailLimit') ? ($('sessionDetailLimit').value || 20) : 20;
+const qs = new URLSearchParams({ accountKey, model, limit });
+const data = await getJson('/debug/sessions/detail?' + qs.toString(), true);
+renderSessionDetail(data);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('会话池详情已读取：总 ' + (data.detail?.summary?.total ?? 0) + '，空闲 ' + (data.detail?.summary?.idle ?? 0), 'ok');
+}catch(e){
+if ($('sessionDetailBox')) $('sessionDetailBox').innerHTML = errorCard('读取会话池详情失败', e);
+toast('读取会话池详情失败：' + e.message, 'bad');
+}
+}
+
+function renderFilesHealth(data){
+const result = data.result || data;
+const s = result.summary || {};
+const files = result.files || [];
+if (!$('filesHealthBox')) return;
+$('filesHealthBox').innerHTML = `
+  <div class="kv" style="margin-bottom:10px">
+    ${kv([
+      ['整体', result.ok ? '<span class="ok">健康</span>' : '<span class="bad">异常</span>'],
+      ['文件数', esc(s.total ?? 0)],
+      ['正常', `<span class="ok">${esc(s.ok ?? 0)}</span>`],
+      ['异常', `<span class="bad">${esc(s.bad ?? 0)}</span>`],
+      ['缺失', esc(s.missing ?? 0)],
+      ['解析失败', esc(s.parseFailed ?? 0)],
+      ['备份数', esc(s.backups ?? 0)],
+    ])}
+  </div>
+  <table>
+    <thead><tr><th>文件</th><th>类型</th><th>状态</th><th>大小</th><th>更新时间</th><th>问题/备份</th></tr></thead>
+    <tbody>
+      ${files.map(f => `<tr>
+        <td>${esc(f.name)}</td>
+        <td>${esc(f.type)}</td>
+        <td>${f.ok ? '<span class="ok">OK</span>' : '<span class="bad">BAD</span>'}${!f.exists ? ' <span class="warn">MISSING</span>' : ''}</td>
+        <td>${esc(f.size ?? 0)}</td>
+        <td>${fmtTime(f.updatedAt)}</td>
+        <td>${esc(f.issue || f.backupPath || '-')}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+  <details style="margin-top:8px"><summary>原始健康检查 JSON</summary><pre>${esc(JSON.stringify(result, null, 2))}</pre></details>
+`;
+}
+
+async function loadFilesHealth(backupCorrupt=false){
+try{
+if (backupCorrupt && !confirm('确认检查并备份损坏文件？只会复制损坏文件，不会自动修复或覆盖。')) return;
+if ($('filesHealthBox')) $('filesHealthBox').innerHTML = '<div class="small warn">检查中...</div>';
+const data = await getJson('/debug/files/health?backupCorrupt=' + (backupCorrupt ? 'true' : 'false'), true);
+renderFilesHealth(data);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('数据文件检查完成：异常 ' + (data.result?.summary?.bad ?? 0) + ' 个', data.result?.ok ? 'ok' : 'bad');
+}catch(e){
+showBoxError('filesHealthBox', '数据文件健康检查失败', e);
+toast('数据文件健康检查失败：' + errorText(e), 'bad');
+}
+}
+function renderAutoSign(a){
+  const results = Array.isArray(a.最近结果) ? a.最近结果 : [];
+  const summary = results.reduce((s, r) => {
+    if (r && r.ok) s.success++; else s.failed++;
+    if (r && r.skipped) s.skipped++;
+    s.usableDelta += Number(r && r.balanceChange && r.balanceChange.usable || 0);
+    return s;
+  }, { success: 0, failed: 0, skipped: 0, usableDelta: 0 });
+  $('autoSignBox').innerHTML = `
+    <div class="kv">${kv([
+      ['启动', a.启动 ? '<span class="ok">true</span>' : '<span class="bad">false</span>'],
+      ['运行', a.运行中 ? '<span class="warn">true</span>' : 'false'],
+      ['上次', fmtTime(a.上次运行时间)],
+      ['下次', fmtTime(a.下次运行时间)],
+      ['成功/失败', `${esc(summary.success)} / ${esc(summary.failed)}`],
+      ['跳过', esc(summary.skipped)],
+      ['可用积分变化', `<span class="${summary.usableDelta >= 0 ? 'ok' : 'bad'}">${summary.usableDelta >= 0 ? '+' : ''}${esc(summary.usableDelta)}</span>`],
+    ])}</div>
+    <h3>最近签到积分变化</h3>
+    <div class="stack">
+      ${results.map(r => {
+        const before = r.beforeBalance && r.beforeBalance.ok ? r.beforeBalance.summary : null;
+        const after = r.afterBalance && r.afterBalance.ok ? r.afterBalance.summary : null;
+        const ch = r.balanceChange || {};
+        return `
+          <div class="account-card">
+            <div class="account-head">
+              <div>
+                <div class="account-name">${esc(r.accountKey || '-')} ${r.ok ? '<span class="ok">成功</span>' : '<span class="bad">失败</span>'} ${r.skipped ? '<span class="warn">已签到/跳过</span>' : ''}</div>
+                <div class="small">日期 ${esc(r.ymd || '-')} · 签到${r.skipped ? '（今日已签）' : `积分 ${esc(r.data?.integral ?? '-')}`}</div>
+              </div>
+              <span class="pill ${r.skipped ? 'muted' : (Number(ch.usable || 0) > 0 ? 'ok' : 'muted')}\">可用 ${r.skipped ? '0 (跳过)' : (Number(ch.usable || 0) >= 0 ? '+' : '')}${r.skipped ? '' : esc(ch.usable ?? 0)}</span>
+            </div>
+            <div class="kv" style="margin-top:8px">
+              ${kv([
+                ['签到前可用', before ? esc(before.usable) : esc(r.beforeBalance?.error || '-')],
+                ['签到后可用', after ? esc(after.usable) : esc(r.afterBalance?.error || '-')],
+                ['总积分变化', esc(ch.total ?? 0)],
+                ['已用变化', esc(ch.use ?? 0)],
+              ])}
+            </div>
+            ${r.error ? `<div class="small bad" style="margin-top:6px">${esc(r.error)}</div>` : ''}
+          </div>`;
+      }).join('') || '<div class="small">暂无签到结果</div>'}
+    </div>
+    <h3>原始结果</h3><pre>${esc(JSON.stringify(results, null, 2))}</pre>
+  `;
+}
+function renderAccounts(list){
+  $('accountCount').textContent = `${list.length} 个`;
+  if (!list.length) { $('accountsBox').innerHTML = '<div class="small">无账号</div>'; return; }
+  $('accountsBox').innerHTML = list.map(a => `
+    <div class="account-card">
+      <div class="account-head">
+        <div>
+          <div class="account-name">${esc(a.key)} · ${esc(a.account)}</div>
+
+          <div class="small">index ${esc(a.index)} · 使用 ${esc(a.usageCount ?? 0)} · ${a.loggingIn ? '<span class="warn">登录中</span>' : '空闲'} · ${a.enabled === false ? '<span class="bad">已禁用</span>' : '<span class="ok">已启用</span>'}</div>
+          <div class="small">
+            健康 ${esc(a.health?.score ?? 100)}
+            · 失败 ${esc(a.health?.consecutiveFailures ?? 0)}
+            · ${a.health?.paused ? '<span class="bad">临时暂停</span>' : '<span class="ok">可调度</span>'}
+          </div>
+          ${a.health?.lastFailureReason ? `<div class="small bad">最近失败：${esc(a.health.lastFailureReason)}</div>` : ''}
+        </div>
+        <span class="${a.health?.paused ? 'bad' : (a.token?.valid ? 'ok' : 'bad')}">${a.health?.paused ? '暂停' : (a.token?.valid ? '有效' : '无效')}</span>
+
+      </div>
+      <div class="kv" style="margin-top:7px">
+        ${kv([
+          ['剩余秒', esc(a.token?.leftSec ?? '-')],
+          ['过期', fmtTime(a.token?.expireAt)],
+          ['会话', `${esc(a.sessions?.idle ?? 0)} / ${esc(a.sessions?.total ?? 0)}`],
+          ['上限', `${esc(a.sessions?.currentLimit ?? 0)} / ${esc(a.sessions?.maxLimit ?? 0)}`],
+        ])}
+      </div>
+      <div id="accountBilling-${esc(a.key)}" class="account-card" style="margin-top:8px;background:#06101d">
+        <div class="small">积分/套餐：等待加载</div>
+      </div>
+      <div class="row" style="margin-top:8px">
+
+        <button class="mini-btn" onclick="refreshToken('${esc(a.key)}')">刷新Token</button>
+        <button class="mini-btn" onclick="toggleAccountEnabled('${esc(a.key)}', ${a.enabled === false ? 'true' : 'false'})">${a.enabled === false ? '启用' : '禁用'}</button>
+        <button class="mini-btn" onclick="changeAccountPassword('${esc(a.key)}')">改密码</button>
+        <button class="mini-btn" onclick="openBillingForAccount('${esc(a.key)}')">积分/购买</button>
+        <button class="mini-btn danger" onclick="deleteAccount('${esc(a.key)}','${esc(a.account)}')">删除</button>
+
+      </div>
+    </div>
+  `).join('');
+  loadAccountsBillingSummary(list);
+}
+
+const accountBillingCache = {};
+
+function summarizeBillingPlans(data){
+  const raw = data?.data ?? data ?? {};
+  const records = raw.records || raw.list || raw.items || [];
+  const list = Array.isArray(records) ? records : [];
+  let total = 0;
+  let used = 0;
+  let remain = 0;
+
+  for (const p of list) {
+    const pTotal = Number(p.total ?? p.integral ?? p.value ?? 0) || 0;
+    const pUsed = Number(p.use ?? p.used ?? p.usedIntegral ?? p.consume ?? p.consumed ?? 0) || 0;
+    const pRemain = Number(p.usable ?? p.remain ?? p.remaining ?? p.balance ?? p.available ?? (pTotal ? Math.max(0, pTotal - pUsed) : 0)) || 0;
+    total += pTotal;
+    used += pUsed;
+    remain += pRemain;
+  }
+
+  const explicitBalance = raw.integral ?? raw.balance ?? raw.user?.integral ?? raw.userInfo?.integral ?? raw.totalIntegral;
+  if (explicitBalance !== undefined && explicitBalance !== null && explicitBalance !== '') {
+    remain = Number(explicitBalance) || remain;
+  }
+
+  return {
+    total,
+    used,
+    remain,
+    count: list.length,
+    page: raw.page,
+    pages: raw.pages,
+    records: list,
+  };
+}
+
+function renderAccountBillingSummary(accountKey, data){
+  const box = $('accountBilling-' + accountKey);
+  if (!box) return;
+  const s = summarizeBillingPlans(data);
+  const top = s.records.slice(0, 2).map(p => {
+    const name = p.name || p.title || p.planName || p.id || '套餐';
+    const total = p.total ?? p.integral ?? '';
+    const used = p.use ?? p.used ?? p.usedIntegral ?? p.consume ?? p.consumed ?? '';
+    const remain = p.usable ?? p.remain ?? p.remaining ?? p.balance ?? p.available ?? (
+      total !== '' ? Math.max(0, Number(total || 0) - Number(used || 0)) : ''
+    );
+    return `${esc(name)}：剩余 ${esc(remain)} · 已用 ${esc(used || 0)} · 总计 ${esc(total)}`;
+  }).join('<br>');
+  box.innerHTML = `
+    <div class="account-head">
+      <div>
+        <div class="account-name">积分/套餐</div>
+        <div class="small">可用 ${esc(s.remain)} · 已用 ${esc(s.used)} · 总计 ${esc(s.total)}</div>
+      </div>
+      <span class="pill">${esc(s.count)} 项</span>
+    </div>
+    ${top ? `<div class="small" style="margin-top:6px">${top}</div>` : '<div class="small" style="margin-top:6px">暂无套餐记录</div>'}
+  `;
+}
+
+function renderAccountBillingError(accountKey, e){
+  const box = $('accountBilling-' + accountKey);
+  if (!box) return;
+  box.innerHTML = `
+    <div class="account-name bad">积分/套餐加载失败</div>
+    <div class="small" style="margin-top:6px">${esc(errorText(e))}</div>
+  `;
+}
+
+async function loadAccountBillingSummary(accountKey, force=false){
+  const box = $('accountBilling-' + accountKey);
+  if (!box) return;
+  const cached = accountBillingCache[accountKey];
+  const now = Date.now();
+  if (!force && cached && now - cached.time < 120000) {
+    if (cached.error) renderAccountBillingError(accountKey, cached.error);
+    else renderAccountBillingSummary(accountKey, cached.data);
+    return;
+  }
+
+  box.innerHTML = '<div class="small">积分/套餐：加载中...</div>';
+  try {
+    const data = await getJson('/debug/billing/plans?accountKey=' + encodeURIComponent(accountKey) + '&all=true', true);
+    accountBillingCache[accountKey] = { time: now, data };
+    renderAccountBillingSummary(accountKey, data);
+  } catch (e) {
+    accountBillingCache[accountKey] = { time: now, error: e };
+    renderAccountBillingError(accountKey, e);
+  }
+}
+
+function loadAccountsBillingSummary(list){
+  (list || []).forEach(a => {
+    if (a && a.key) loadAccountBillingSummary(a.key);
+  });
+}
+
+function renderRuntimeConfig(runtime){
+if (!runtime) return;
+const c = runtime.config || {};
+$('runtimeConfigBox').textContent = JSON.stringify(runtime, null, 2);
+$('cfgModelRefresh').value = c.modelRefreshIntervalSec ?? '';
+$('cfgSessionSync').value = c.sessionSyncIntervalMin ?? '';
+$('cfgTokenCheck').value = c.tokenRefreshCheckIntervalSec ?? '';
+$('cfgTokenBefore').value = c.tokenRefreshBeforeSec ?? '';
+$('cfgSignEnabled').checked = c.autoSignEnabled !== false;
+$('cfgSignHours').value = c.autoSignIntervalHours ?? '';
+$('cfgSignDelay').value = c.autoSignInitialDelaySec ?? '';
+
+$('cfgLogLevel').value = c.logLevel || 'INFO';
+$('cfgNotifyEnabled').checked = c.notifyEnabled === true;
+  $('cfgWeworkWebhook').value = c.weworkWebhookUrl || '';
+  $('cfgNotifyModelChange').checked = c.notifyModelChange !== false;
+  $('cfgNotifyFailure').checked = c.notifyFailure !== false;
+  $('cfgNotifyAccountFailure').checked = c.notifyAccountFailure !== false;
+  $('cfgNotifyUpstreamFailure').checked = c.notifyUpstreamFailure !== false;
+  $('cfgNotifyLowBalance').checked = c.notifyLowBalance !== false;
+  $('cfgLowBalanceThreshold').value = c.lowBalanceThreshold ?? '';
+  $('cfgNotifyCooldownMs').value = c.notifyCooldownMs ?? '';
+}
+
+async function loadRuntimeConfig(){
+try{
+const data = await getJson('/debug/config', true);
+const targetModel = data.runtime?.config?.censorProbeModel || '';
+await loadCensorProbeModelList(targetModel);
+renderRuntimeConfig(data.runtime);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+loadRuntimeConfigHistory();
+toast('运行配置已读取', 'ok');
+}catch(e){ showBoxError('runtimeConfigBox', '读取运行配置失败', e); toast('读取运行配置失败：' + errorText(e), 'bad'); }
+}
+
+async function loadCensorProbeModelList(targetValue){
+try{
+const data = await getJson('/v1/models', true);
+const select = $('cfgCensorProbeModel');
+if (!select) return;
+const models = (data.data || []).map(m => m.id).sort();
+select.innerHTML = '<option value="">（默认）使用触发误判的模型</option>' + 
+  models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+if (targetValue !== undefined) select.value = targetValue;
+}catch(e){ console.error('加载模型列表失败', e); }
+}
+
+async function loadModelsTab(){
+try{
+const priceData = await getJson('/debug/backup/file/模型价格.json', true);
+const priceList = priceData?.file?.json?.模型价格 || [];
+const priceMap = {};
+priceList.forEach(p => {
+  priceMap[p.id] = { integral: p.integral, caps: p.capabilities || {} };
+});
+const modelData = await getJson('/v1/models', true);
+const models = modelData.data || [];
+const box = $('modelsListBox');
+if (!models.length) { box.innerHTML = '<div class="small">无可用模型</div>'; return; }
+box.innerHTML = `<table><thead><tr><th>模型ID</th><th>提供商</th><th>价格</th><th>支持图片</th><th>支持文件</th><th>创建时间</th></tr></thead><tbody>` + 
+  models.map(m => {
+    const info = priceMap[m.id] || {};
+    const caps = info.caps || {};
+    const vision = caps.imageInput === true;
+    const files = caps.anyFile === true;
+    const integral = info.integral || '-';
+    const priceText = integral === '免费' ? '<span class="ok">免费</span>' : esc(integral);
+    return `<tr>
+      <td>${esc(m.id)}</td>
+      <td>${esc(m.owned_by || '-')}</td>
+      <td>${priceText}</td>
+      <td class="${vision ? 'ok' : 'muted'}">${vision ? '✓' : '✗'}</td>
+      <td class="${files ? 'ok' : 'muted'}">${files ? '✓' : '✗'}</td>
+      <td>${fmtTime(m.created ? new Date(m.created * 1000).toISOString() : '')}</td>
+    </tr>`;
+  }).join('') + 
+  `</tbody></table>`;
+}catch(e){ showBoxError('modelsListBox', '加载模型列表失败', e); }
+}
+
+function renderRuntimeConfigHistory(data){
+  const box = $('runtimeConfigHistoryBox');
+  if (!box) return;
+  const list = data.history || [];
+  if (!list.length) {
+    box.innerHTML = '<div class="small">暂无配置变更历史</div>';
+    return;
+  }
+  box.innerHTML = list.map(h => `
+    <div class="account-card">
+      <div class="account-head">
+        <div>
+          <div class="account-name">${esc(h.action || '-')} · ${esc(fmtTime(h.time))}</div>
+          <div class="small">变更项：${esc((h.changedKeys || []).join(', ') || '无')}</div>
+          ${h.source ? `<div class="small">来源：${esc(h.source)}</div>` : ''}
+        </div>
+        <span class="pill">${esc((h.changedKeys || []).length)} 项</span>
+      </div>
+      <pre style="margin-top:8px;max-height:140px">${esc(JSON.stringify({ before:h.before, after:h.after }, null, 2))}</pre>
+    </div>
+  `).join('');
+}
+
+async function loadRuntimeConfigHistory(){
+  try{
+    const data = await getJson('/debug/config/history?limit=20', true);
+    renderRuntimeConfigHistory(data);
+  }catch(e){
+    if ($('runtimeConfigHistoryBox')) $('runtimeConfigHistoryBox').innerHTML = errorCard('读取配置历史失败', e);
+  }
+}
+
+async function saveRuntimeConfig(){
+  const body = {
+    modelRefreshIntervalSec: Number($('cfgModelRefresh').value),
+    sessionSyncIntervalMin: Number($('cfgSessionSync').value),
+    tokenRefreshCheckIntervalSec: Number($('cfgTokenCheck').value),
+    tokenRefreshBeforeSec: Number($('cfgTokenBefore').value),
+    autoSignEnabled: $('cfgSignEnabled').checked,
+    autoSignIntervalHours: Number($('cfgSignHours').value),
+
+    autoSignInitialDelaySec: Number($('cfgSignDelay').value),
+logLevel: $('cfgLogLevel').value,
+censorProbeModel: $('cfgCensorProbeModel')?.value?.trim() || '',
+notifyEnabled: $('cfgNotifyEnabled').checked,
+    weworkWebhookUrl: $('cfgWeworkWebhook').value.trim(),
+    notifyModelChange: $('cfgNotifyModelChange').checked,
+    notifyFailure: $('cfgNotifyFailure').checked,
+    notifyAccountFailure: $('cfgNotifyAccountFailure').checked,
+    notifyUpstreamFailure: $('cfgNotifyUpstreamFailure').checked,
+    notifyLowBalance: $('cfgNotifyLowBalance').checked,
+    lowBalanceThreshold: Number($('cfgLowBalanceThreshold').value),
+    notifyCooldownMs: Number($('cfgNotifyCooldownMs').value),
+  };
+
+  await postAction('/debug/maintenance/config', body);
+  await loadRuntimeConfig();
+  await loadRuntimeConfigHistory();
+}
+
+async function resetRuntimeConfig(){
+  if (!confirm('确认恢复默认运行配置？会立即重载定时器和日志级别。')) return;
+  await postAction('/debug/maintenance/config/reset', {});
+  await loadRuntimeConfig();
+  await loadRuntimeConfigHistory();
+}
+
+async function testNotify(){
+  await postAction('/debug/maintenance/test-notify');
+}
+
+async function loadCensorRules(){
+
+try{
+const data = await getJson('/debug/files/censor-rules', true);
+if ($('censorRulesEditor')) $('censorRulesEditor').value = JSON.stringify(data.data || { 词表: {} }, null, 2);
+$('censorRulesBox').textContent = JSON.stringify(data, null, 2);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('误判词 JSON 已读取，共 ' + (data.count ?? 0) + ' 条', 'ok');
+}catch(e){ showBoxError('censorRulesBox', '读取误判词 JSON 失败', e); toast('读取误判词 JSON 失败：' + errorText(e), 'bad'); }
+}
+
+function parseCensorRulesEditor(){
+const text = String($('censorRulesEditor')?.value || '').trim();
+if (!text) throw new Error('误判词 JSON 不能为空');
+const data = JSON.parse(text);
+if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('根节点必须是 JSON 对象');
+if (!data.词表 || typeof data.词表 !== 'object' || Array.isArray(data.词表)) throw new Error('必须包含对象字段：词表');
+return data;
+}
+
+function validateCensorRulesEditor(){
+try{
+const data = parseCensorRulesEditor();
+$('censorRulesEditor').value = JSON.stringify(data, null, 2);
+const result = { ok: true, count: Object.keys(data.词表 || {}).length, data };
+$('censorRulesBox').textContent = JSON.stringify(result, null, 2);
+$('lastResult').textContent = JSON.stringify(result, null, 2);
+toast('误判词 JSON 校验通过，共 ' + result.count + ' 条', 'ok');
+return data;
+}catch(e){
+$('censorRulesBox').innerHTML = errorCard('误判词 JSON 校验失败', e);
+toast('误判词 JSON 校验失败：' + e.message, 'bad');
+return null;
+}
+}
+
+async function saveCensorRules(){
+const data = validateCensorRulesEditor();
+if (!data) return;
+const count = Object.keys(data.词表 || {}).length;
+if (!confirm('确认保存误判词规则？\n当前词条数：' + count + '\n服务端会先自动备份旧文件。')) return;
+try{
+const result = await postJson('/debug/files/censor-rules', { data });
+if ($('censorRulesEditor')) $('censorRulesEditor').value = JSON.stringify(result.data || data, null, 2);
+$('censorRulesBox').textContent = JSON.stringify(result, null, 2);
+$('lastResult').textContent = JSON.stringify(result, null, 2);
+toast('误判词规则已保存，共 ' + (result.count ?? count) + ' 条', 'ok');
+await refreshAll(true);
+}catch(e){
+$('censorRulesBox').innerHTML = errorCard('保存误判词 JSON 失败', e);
+toast('保存误判词 JSON 失败：' + e.message, 'bad');
+}
+}
+
+let currentBillingAccountKey = '';
+
+function getAccountByKey(accountKey){
+  return (statusCache?.accounts || []).find(a => a.key === accountKey);
+}
+
+function billingAccountKey(){
+  return currentBillingAccountKey || statusCache?.accounts?.[0]?.key || 'acc_0';
+}
+
+function renderBillingAccount(){
+  const accountKey = billingAccountKey();
+  const account = getAccountByKey(accountKey);
+  if ($('billingAccountTitle')) $('billingAccountTitle').textContent = account ? `${account.key} · ${account.account}` : accountKey;
+  if ($('billingAccountDesc')) $('billingAccountDesc').textContent = account
+    ? `index ${account.index} · ${account.enabled === false ? '已禁用' : '已启用'} · token ${account.token?.valid ? '有效' : '无效'}`
+    : '当前账号来自默认账号 key';
+  if ($('billingAccountPill')) $('billingAccountPill').textContent = accountKey;
+}
+
+async function openBillingForAccount(accountKey){
+  currentBillingAccountKey = accountKey;
+  renderBillingAccount();
+  $('billingProductsBox').innerHTML = '<div class="small">正在加载商品...</div>';
+  $('billingPlansBox').innerHTML = '<div class="small">正在加载余额/套餐...</div>';
+  $('billingPayBox').innerHTML = '';
+  $('billingResultBox').textContent = '正在加载...';
+  showTab('billing');
+  try {
+    await Promise.all([loadBillingProducts(), loadBillingPlans(), loadBillingOrders()]);
+  } catch (_) {}
+}
+
+function payMethodLabel(method){
+const labels = {
+ALIPAY: '支付宝',
+'EASY-wxpay': '微信支付',
+};
+return labels[method] || method;
+}
+function normalizePayMethods(methods){
+const fallback = [
+{ label: '支付宝', value: 'ALIPAY' },
+{ label: '微信支付', value: 'EASY-wxpay' },
+];
+const source = Array.isArray(methods) && methods.length ? methods : fallback;
+const seen = new Set();
+return source.map(item => {
+if (typeof item === 'string') return { label: payMethodLabel(item), value: item };
+if (item && typeof item === 'object') {
+const value = item.value || item.method || item.code || item.name;
+const label = item.label || payMethodLabel(value);
+return value ? { label, value } : null;
+}
+return null;
+}).filter(item => {
+if (!item || !item.value || seen.has(item.value)) return false;
+seen.add(item.value);
+return true;
+});
+}
+function updateBillingMethodOptions(methods, defaultMethod){
+const select = $('billingMethod');
+if (!select) return;
+const options = normalizePayMethods(methods);
+const current = select.value;
+select.innerHTML = options.map(m => `<option value="${esc(m.value)}">${esc(m.label)}</option>`).join('');
+const values = options.map(m => m.value);
+if (defaultMethod && values.includes(defaultMethod)) select.value = defaultMethod;
+else if (values.includes(current)) select.value = current;
+}
+
+async function loadBillingProducts(){
+try{
+renderBillingAccount();
+const data = await getJson('/debug/billing/products?accountKey=' + encodeURIComponent(billingAccountKey()), true);
+const list = data.data?.list || [];
+const methods = data.data?.payMethods || [];
+updateBillingMethodOptions(methods, data.data?.defaultMethod);
+$('billingProductsBox').innerHTML = list.map(p => `
+      <div class="account-card">
+        <div class="account-head">
+          <div>
+            <div class="account-name">${esc(p.id)} · ${esc(p.name)}</div>
+            <div class="small">积分 ${esc(p.integral)} · ￥${esc(p.finalPrice ?? p.price)} · ${p.available ? '<span class="ok">可购买</span>' : '<span class="bad">不可购买</span>'}</div>
+          </div>
+          <button class="mini-btn" onclick="selectProduct('${esc(p.id)}')">选择</button>
+        </div>
+      </div>
+    `).join('') + '<h3>支付方式</h3><div class="small">' + normalizePayMethods(methods).map(m => `${esc(m.label)}(${esc(m.value)})`).join(' / ') + '</div>';
+    $('billingResultBox').textContent = JSON.stringify(data, null, 2);
+    toast('积分商品已加载：' + billingAccountKey(), 'ok');
+  }catch(e){
+    $('billingProductsBox').innerHTML = errorCard('加载积分商品失败', e);
+    $('billingResultBox').textContent = JSON.stringify(e.data || { error: errorText(e) }, null, 2);
+    toast('加载积分商品失败：' + errorText(e), 'bad');
+  }
+}
+
+function selectProduct(id){
+  $('billingProductId').value = id;
+  toast('已选择商品 ' + id, 'ok');
+}
+
+function renderBillingPlans(data){
+  const raw = data?.data ?? data;
+  const list = raw?.list || raw?.records || raw?.items || [];
+  const balance = raw?.integral ?? raw?.balance ?? raw?.user?.integral ?? raw?.userInfo?.integral ?? raw?.totalIntegral;
+  const title = balance !== undefined ? `积分余额：${esc(balance)}` : '余额/套餐';
+  $('billingPlansBox').innerHTML = `
+    <div class="account-head">
+      <div>
+        <div class="account-name">${title}</div>
+        <div class="small">账号 ${esc(billingAccountKey())}</div>
+      </div>
+      <span class="pill">${esc(Array.isArray(list) ? list.length : 0)} 项</span>
+    </div>
+    ${Array.isArray(list) && list.length ? `
+      <div style="margin-top:8px">
+        ${list.slice(0, 5).map(p => `
+          <div class="small" style="border-top:1px solid var(--line);padding-top:6px;margin-top:6px">
+            ${esc(p.name || p.title || p.planName || p.id || '套餐')} · ${esc(p.integral ?? p.balance ?? p.remain ?? p.value ?? '')}
+          </div>
+        `).join('')}
+      </div>
+    ` : '<div class="small" style="margin-top:6px">未解析到套餐列表，完整返回见下方 JSON。</div>'}
+  `;
+}
+
+async function loadBillingPlans(){
+  try{
+    renderBillingAccount();
+    const data = await getJson('/debug/billing/plans?accountKey=' + encodeURIComponent(billingAccountKey()) + '&page=1', true);
+    renderBillingPlans(data);
+    $('billingResultBox').textContent = JSON.stringify(data, null, 2);
+    toast('积分计划已加载：' + billingAccountKey(), 'ok');
+  }catch(e){
+    $('billingPlansBox').innerHTML = errorCard('加载余额/套餐失败', e);
+    $('billingResultBox').textContent = JSON.stringify(e.data || { error: errorText(e) }, null, 2);
+    toast('加载积分计划失败：' + errorText(e), 'bad');
+  }
+}
+
+function orderStatusLabel(status){
+  const map = {
+    WAIT: '待支付',
+    OK: '支付成功',
+    COMPLETE: '已完成',
+    CANCEL: '已取消',
+    CLOSE: '已关闭',
+    FAIL: '支付失败',
+    REFUND: '已退款',
+    REFUNDING: '退款中',
+    REFUND_FAIL: '退款失败',
+  };
+  return map[status] || status || '-';
+}
+
+async function loadBillingOrders(){
+  const box = $('billingOrdersBox');
+  if (!box) return;
+  box.innerHTML = '<div class="small">订单历史加载中...</div>';
+  try {
+    const data = await getJson('/debug/billing/orders/recent?limit=30', true);
+    const orders = data.orders || [];
+    if (!orders.length) {
+      box.innerHTML = '<div class="small">暂无本地订单历史。创建或取消订单后会自动记录。</div>';
+    } else {
+      box.innerHTML = orders.map(o => {
+        const raw = o.raw || {};
+        const orderNo = o.orderNo || raw.orderNo || raw.no || '-';
+        const status = o.status || raw.status || (o.event === 'created' ? 'WAIT' : '');
+        const name = o.name || raw.name || ('商品 ' + (o.productId || raw.productId || '-'));
+        const amount = o.amount ?? raw.amount ?? '';
+        const method = o.payMethod || o.method || raw.payMethod || '';
+        return `
+          <div class="account-card">
+            <div class="account-head">
+              <div>
+                <div class="account-name">${esc(orderNo)}</div>
+                <div class="small">${esc(o.event || '-')} · ${esc(name)} · ${esc(method)} ${amount !== '' ? '· ￥' + esc(amount) : ''}</div>
+                <div class="small">${esc(fmtTime(o.time))} · 账号 ${esc(o.accountKey || '-')}</div>
+              </div>
+              <span class="pill">${esc(orderStatusLabel(status))}</span>
+            </div>
+            ${o.payUrl || raw.payUrl ? `<div class="row" style="margin-top:6px"><button class="mini-btn" onclick="window.open('${esc(o.payUrl || raw.payUrl)}','_blank')">打开支付链接</button></div>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    box.innerHTML = errorCard('加载订单历史失败', e);
+    toast('加载订单历史失败：' + errorText(e), 'bad');
+  }
+}
+
+function qrImg(text) {
+  if (!text) return '';
+  return 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(text);
+}
+
+function renderBillingPayment(order) {
+  order = order || {};
+  const payUrl = order.payUrl || '';
+  const qrcode = order.qrcode || '';
+  const orderNo = order.orderNo || '';
+  const tips = order.tips || '';
+  const qrcodeText = qrcode || payUrl;
+
+  if (!payUrl && !qrcode && !orderNo) {
+    $('billingPayBox').innerHTML = '';
+    return;
+  }
+
+  $('billingPayBox').innerHTML = `
+    <div class="account-card">
+      <div class="account-head">
+        <div>
+          <div class="account-name">订单 ${esc(orderNo || '-')}</div>
+          <div class="small">支付方式 ${esc(order.payMethod || order.method || '-')} · ${esc(tips || '')}</div>
+        </div>
+      </div>
+      ${payUrl ? `
+        <div class="stack" style="margin-top:8px">
+          <div class="small">支付链接</div>
+          <pre style="max-height:90px">${esc(payUrl)}</pre>
+          <div class="row">
+            <button class="mini-btn primary" onclick="openPayUrl()">打开支付链接</button>
+            <button class="mini-btn" onclick="copyPayUrl()">复制支付链接</button>
+          </div>
+        </div>
+      ` : ''}
+      ${qrcodeText ? `
+        <div style="margin-top:10px">
+          <div class="small">${qrcode ? '接口 qrcode / 二维码内容' : 'payUrl 自动生成二维码'}</div>
+          <img alt="支付二维码" src="${esc(qrImg(qrcodeText))}" style="margin-top:6px;width:220px;max-width:100%;background:white;padding:8px;border-radius:12px;border:1px solid var(--line)" />
+          ${qrcode ? `<pre style="margin-top:8px;max-height:90px">${esc(qrcode)}</pre>` : ''}
+        </div>
+      ` : ''}
+    </div>
+  `;
+  window.__lastPayUrl = payUrl;
+}
+
+function openPayUrl() {
+  if (!window.__lastPayUrl) return toast('没有支付链接', 'bad');
+  window.open(window.__lastPayUrl, '_blank');
+}
+
+async function copyPayUrl() {
+  if (!window.__lastPayUrl) return toast('没有支付链接', 'bad');
+  try {
+    await navigator.clipboard.writeText(window.__lastPayUrl);
+    toast('支付链接已复制', 'ok');
+  } catch {
+    prompt('复制支付链接', window.__lastPayUrl);
+  }
+}
+
+async function createBillingOrder(){
+  const accountKey = billingAccountKey();
+  renderBillingAccount();
+  const productId = Number($('billingProductId').value);
+  const method = $('billingMethod').value;
+if (!productId || !method) return toast('请选择商品和支付方式', 'bad');
+  if (!confirm('确认创建积分订单？这只会生成支付链接，不会自动付款。')) return;
+  try{
+    const data = await postJson('/debug/billing/orders', { accountKey, productId, method, openid:{} });
+    $('billingResultBox').textContent = JSON.stringify(data, null, 2);
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    if (data.data?.orderNo) $('billingCancelOrderNo').value = data.data.orderNo;
+    renderBillingPayment(data.data || {});
+    loadBillingOrders();
+    toast('订单已创建', 'ok');
+  }catch(e){ showBoxError('billingResultBox', '创建订单失败', e); toast('创建订单失败：' + errorText(e), 'bad'); }
+}
+
+async function cancelBillingOrder(){
+  const orderNo = $('billingCancelOrderNo').value.trim();
+  if (!orderNo) return toast('请输入 orderNo', 'bad');
+  if (!confirm('确认取消订单 ' + orderNo + '？')) return;
+  try{
+    const data = await postJson('/debug/billing/orders/' + encodeURIComponent(orderNo) + '/cancel', { accountKey: billingAccountKey() });
+    $('billingResultBox').textContent = JSON.stringify(data, null, 2);
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    loadBillingOrders();
+    toast('订单已取消', 'ok');
+  }catch(e){ showBoxError('billingResultBox', '取消订单失败', e); toast('取消订单失败：' + errorText(e), 'bad'); }
+}
+
+async function loadPriceHistory(){
+
+try{
+const limit = $('priceHistoryLimit') ? ($('priceHistoryLimit').value || 30) : 30;
+const model = $('priceHistoryModel') ? $('priceHistoryModel').value.trim() : '';
+const qs = new URLSearchParams({ limit, model });
+const data = await getJson('/debug/model-price/history?' + qs.toString(), true);
+if ($('priceHistorySummaryBox')) $('priceHistorySummaryBox').textContent = JSON.stringify(data.summary || {}, null, 2);
+$('priceHistoryBox').textContent = JSON.stringify(data, null, 2);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+const s = data.summary || {};
+toast('模型价格历史已读取：记录 ' + (s.records ?? data.history?.length ?? 0) + '，变价 ' + (s.priceChanged ?? 0), 'ok');
+}catch(e){
+if ($('priceHistorySummaryBox')) $('priceHistorySummaryBox').textContent = '读取失败';
+showBoxError('priceHistoryBox', '读取价格历史失败', e);
+toast('读取价格历史失败：' + errorText(e), 'bad');
+}
+}
+
+async function loadRecentLogs(){
+try{
+const lines = $('logLines') ? ($('logLines').value || 200) : 200;
+const level = $('logLevelFilter') ? $('logLevelFilter').value : 'ALL';
+const keyword = $('logKeyword') ? $('logKeyword').value.trim() : '';
+const qs = new URLSearchParams({ lines, level, keyword });
+const data = await getJson('/debug/logs/recent?' + qs.toString(), true);
+$('recentLogsBox').textContent = JSON.stringify(data, null, 2);
+$('lastResult').textContent = JSON.stringify(data, null, 2);
+toast('最近日志已读取，匹配 ' + (data.totalMatched ?? data.lines?.length ?? 0) + ' 行', 'ok');
+}catch(e){ showBoxError('recentLogsBox', '读取日志失败', e); toast('读取日志失败：' + errorText(e), 'bad'); }
+}
+
+async function loadRecentEvents(){
+  try{
+    const limit = $('eventLimit') ? ($('eventLimit').value || 100) : 100;
+    const level = $('eventLevelFilter') ? $('eventLevelFilter').value : 'ALL';
+    const type = $('eventTypeFilter') ? $('eventTypeFilter').value.trim() : '';
+    const keyword = $('eventKeyword') ? $('eventKeyword').value.trim() : '';
+    const qs = new URLSearchParams({ limit, level, type, keyword });
+    const [recent, stats] = await Promise.all([
+      getJson('/debug/events/recent?' + qs.toString(), true),
+      getJson('/debug/events/stats?max=5000', true),
+    ]);
+    $('recentEventsBox').textContent = JSON.stringify(recent, null, 2);
+    if ($('eventStatsBox')) {
+      const s = stats.stats || {};
+      $('eventStatsBox').textContent = JSON.stringify({
+        total: s.total,
+        byLevel: s.byLevel,
+        topTypes: s.topTypes,
+      }, null, 2);
+    }
+    if ($('eventAbnormalBox')) {
+      $('eventAbnormalBox').textContent = JSON.stringify((stats.stats && stats.stats.recentAbnormal) || [], null, 2);
+    }
+    $('lastResult').textContent = JSON.stringify({ recent, stats }, null, 2);
+    toast('事件已读取，匹配 ' + (recent.totalMatched ?? recent.events?.length ?? 0) + ' 条', 'ok');
+  }catch(e){ showBoxError('recentEventsBox', '读取事件失败', e); if ($('eventStatsBox')) $('eventStatsBox').innerHTML = errorCard('读取事件统计失败', e); toast('读取事件失败：' + errorText(e), 'bad'); }
+}
+
+async function loadBackupFiles(){
+
+  try{
+    const data = await getJson('/debug/backup/files', true);
+    $('backupFilesBox').innerHTML = (data.files || []).map(f => `
+      <div class="account-card">
+        <div class="account-head">
+          <div>
+            <div class="account-name">${esc(f.name)}</div>
+            <div class="small">${f.exists ? ('大小 ' + esc(f.size) + ' bytes · ' + fmtTime(f.updatedAt)) : '不存在'}</div>
+          </div>
+          <button class="mini-btn" ${f.exists ? '' : 'disabled'} onclick="viewBackupFile('${esc(f.name)}')">查看</button>
+        </div>
+      </div>
+    `).join('');
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('备份清单已刷新', 'ok');
+  }catch(e){ showBoxError('backupFilesBox', '读取备份清单失败', e); toast('读取备份清单失败：' + errorText(e), 'bad'); }
+}
+
+async function viewBackupFile(name){
+  try{
+    const data = await getJson('/debug/backup/file/' + encodeURIComponent(name), true);
+    $('backupPreviewBox').textContent = JSON.stringify(data, null, 2);
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('已读取：' + name, 'ok');
+  }catch(e){ showBoxError('backupPreviewBox', '读取备份文件失败', e); toast('读取备份文件失败：' + errorText(e), 'bad'); }
+}
+
+function parseRestoreFiles(){
+  return String($('backupRestoreFiles')?.value || '')
+    .split(/[,\n\r]+/)
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function parseRestoreBackupJson(){
+  const text = String($('backupRestoreJson')?.value || '').trim();
+  if (!text) throw new Error('请先粘贴备份 JSON');
+  return JSON.parse(text);
+}
+
+function renderBackupRestorePreview(data){
+  const box = $('backupRestoreResultBox');
+  const list = data.preview || [];
+  if (!list.length) {
+    box.innerHTML = '<div class="small">没有可预览的文件</div>';
+    return;
+  }
+  box.innerHTML = list.map(p => `
+    <div class="account-card">
+      <div class="account-head">
+        <div>
+          <div class="account-name">${esc(p.name)}</div>
+          <div class="small">
+            ${p.allowed ? '<span class="ok">允许</span>' : '<span class="bad">不允许</span>'}
+            · ${p.inBackup ? '备份中存在' : '备份中不存在'}
+            · ${p.currentExists ? '当前存在' : '当前不存在'}
+            · ${p.changed ? '<span class="warn">有变化</span>' : '<span class="ok">无变化</span>'}
+          </div>
+        </div>
+        <span class="pill">${p.canRestore ? '可恢复' : '不可恢复'}</span>
+      </div>
+      <div class="form2" style="margin-top:8px">
+        <div>
+          <div class="small">当前内容预览</div>
+          <pre style="max-height:140px">${esc(p.currentPreview || '')}</pre>
+        </div>
+        <div>
+          <div class="small">备份内容预览</div>
+          <pre style="max-height:140px">${esc(p.backupPreview || '')}</pre>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function previewBackupRestore(){
+  try {
+    const backup = parseRestoreBackupJson();
+    const files = parseRestoreFiles();
+    const data = await postJson('/debug/backup/restore/preview', { backup, files });
+    renderBackupRestorePreview(data);
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('恢复预览已生成', 'ok');
+  } catch(e) {
+    $('backupRestoreResultBox').innerHTML = errorCard('恢复预览失败', e);
+    toast('恢复预览失败：' + (e.message || e), 'bad');
+  }
+}
+
+async function applyBackupRestore(){
+  const files = parseRestoreFiles();
+  if (!files.length) return toast('必须填写要恢复的文件名，不能空选', 'bad');
+  if (files.includes('账号token.json') && !confirm('你选择了账号token.json，里面包含敏感 token。确认恢复？')) return;
+  if (!confirm('确认恢复这些文件？\\n' + files.join('\\n') + '\\n\\n当前文件会先备份为 .restore-backup-*')) return;
+  try {
+    const backup = parseRestoreBackupJson();
+    const data = await postJson('/debug/backup/restore/apply', { backup, files });
+    $('backupRestoreResultBox').innerHTML = `
+      <div class="account-card">
+        <div class="account-name ok">选择性恢复完成</div>
+        <div class="small">已恢复：${esc((data.restored || []).map(x => x.name).join(', '))}</div>
+        <pre style="margin-top:8px">${esc(JSON.stringify(data, null, 2))}</pre>
+      </div>
+    `;
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    await loadBackupFiles();
+    toast('选择性恢复完成', 'ok');
+  } catch(e) {
+    $('backupRestoreResultBox').innerHTML = errorCard('执行恢复失败', e);
+    toast('执行恢复失败：' + (e.message || e), 'bad');
+  }
+}
+
+function exportBackup(){
+const url = '/debug/backup/export';
+  fetch(url, { headers: headers() })
+    .then(async res => {
+      if (!res.ok) throw new Error((await res.text()) || res.statusText);
+      return res.blob();
+    })
+    .then(blob => {
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'xs-backup-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast('备份已开始下载', 'ok');
+    })
+    .catch(e => toast('导出备份失败：' + e.message, 'bad'));
+}
+
+function renderRecent(list){
+
+  if (!list.length) { $('recentRequests').innerHTML = '<div class="small">暂无请求</div>'; return; }
+  $('recentRequests').innerHTML = `<table><thead><tr><th>时间</th><th>模型</th><th>账号</th><th>状态</th><th>耗时</th></tr></thead><tbody>` +
+    list.slice().reverse().map(r => `<tr><td>${esc(r.time)}</td><td>${esc(r.model)}</td><td>${esc(r.accountKey)}</td><td>${esc(r.status)}</td><td>${esc(r.durationMs)}ms</td></tr>`).join('') +
+    `</tbody></table>`;
+}
+
+async function postAction(url, body={}){
+  try{
+    const data = await postJson(url, body);
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('操作成功：' + (data.action || url), 'ok');
+    setTimeout(() => refreshAll(true).catch(()=>{}), 600);
+  }catch(e){ showBoxError('lastResult', '操作失败', e); toast('操作失败：' + errorText(e), 'bad'); }
+}
+async function refreshToken(accountKey){
+  if (!accountKey) return;
+  await postAction('/debug/maintenance/refresh-token', { accountKey });
+}
+async function refreshTokenPrompt(){
+  const def = statusCache?.accounts?.[0]?.key || 'acc_0';
+  const accountKey = prompt('输入账号 key', def);
+  if (accountKey) await refreshToken(accountKey);
+}
+async function addAccount(){
+  const account = $('newAccount').value.trim();
+  const password = $('newPassword').value;
+  const login = $('newLogin').checked;
+  if (!account || !password) return toast('请填写账号和密码', 'bad');
+  try{
+    const data = await postJson('/debug/maintenance/accounts', { account, password, login });
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    $('newAccount').value = ''; $('newPassword').value = '';
+    toast('账号已增加：' + (data.account?.key || ''), 'ok');
+    await refreshAll(true);
+  }catch(e){ showBoxError('accountsBox', '新增账号失败', e); toast('新增账号失败：' + errorText(e), 'bad'); }
+}
+
+async function toggleAccountEnabled(accountKey, enabled){
+  const action = enabled ? '启用' : '禁用';
+  if (!confirm(`确认${action}账号 ${accountKey}？`)) return;
+  try{
+    const data = await patchJson('/debug/maintenance/accounts/' + encodeURIComponent(accountKey), { enabled });
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast(`账号已${action}：` + accountKey, 'ok');
+    await refreshAll(true);
+  }catch(e){ showBoxError('accountsBox', `${action}账号失败`, e); toast(`${action}账号失败：` + errorText(e), 'bad'); }
+}
+
+async function changeAccountPassword(accountKey){
+  const password = prompt('输入新密码。留空取消。');
+  if (!password) return;
+  const login = confirm('是否立即登录验证并刷新 token？');
+  try{
+    const data = await patchJson('/debug/maintenance/accounts/' + encodeURIComponent(accountKey), { password, login });
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('账号密码已更新：' + accountKey, 'ok');
+    await refreshAll(true);
+  }catch(e){ showBoxError('accountsBox', '修改密码失败', e); toast('修改密码失败：' + errorText(e), 'bad'); }
+}
+
+async function deleteAccount(accountKey, account){
+
+  if (!confirm(`确认删除账号 ${accountKey}（${account}）？\n删除后 acc_N 会重排，并重写 token 文件。`)) return;
+  try{
+    const data = await deleteJson('/debug/maintenance/accounts/' + encodeURIComponent(accountKey));
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('账号已删除：' + accountKey, 'ok');
+    await refreshAll(true);
+  }catch(e){ showBoxError('accountsBox', '删除账号失败', e); toast('删除账号失败：' + errorText(e), 'bad'); }
+}
+async function loadUnclassified(){
+  try{
+    const data = await getJson('/debug/maintenance/unclassified-model-errors?limit=20', true);
+    $('unclassifiedBox').textContent = JSON.stringify(data, null, 2);
+    $('lastResult').textContent = JSON.stringify(data, null, 2);
+    toast('未分类错误已加载', 'ok');
+  }catch(e){ showBoxError('unclassifiedBox', '加载未分类错误失败', e); toast('加载失败：' + errorText(e), 'bad'); }
+}
+async function clearUnclassified(){
+  if (!confirm('确认清空未分类模型错误样例？此操作不可撤销。')) return;
+  await postAction('/debug/maintenance/clear-unclassified-model-errors');
+  await loadUnclassified();
+}
+
+$('loginKey').value = key();
+if (key()) {
+  login().catch(() => {});
+}
+</script>
+</body>
+</html>

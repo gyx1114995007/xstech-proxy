@@ -1,0 +1,69 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Build output
+dist/
+build/
+out/
+*.bundle.js
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+
+# Project specific
+*.tmp
+*.temp
+coverage/
+.nyc_output/
+
+# 敏感数据（不提交到Git）
+账号token.json
+账号列表.json
+会话池.json
+误判词.json
+误判词.json.bak-*
+运行配置.json
+运行配置历史.jsonl
+事件日志.jsonl
+响应历史.jsonl
+Responses文件上下文.jsonl
+模型价格.json
+模型价格变化历史.jsonl
+模型映射.json
+模型流错误未分类.json
+模型流错误规则.json
+订单历史.jsonl
+
+# 备份文件（不提交）
+手动备份/
+*.bak
+*.backup
