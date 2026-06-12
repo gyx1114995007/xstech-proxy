@@ -116,8 +116,8 @@
       <button class="tab active" data-group="core" data-short="概" onclick="showTab('overview', this)">概览</button>
       <button class="tab" data-group="core" data-short="账" onclick="showTab('accounts', this)">账号</button>
       <button class="tab" data-group="core" data-short="积" onclick="showTab('billing', this)">积分</button>
-<button class="tab" data-group="core" data-short="话" onclick="showTab('sessions', this)">会话池</button>
 <button class="tab" data-group="core" data-short="模" onclick="showTab('models', this)">模型</button>
+<button class="tab" data-group="core" data-short="话" onclick="showTab('sessions', this)">会话池</button>
 
 <button class="tab" data-group="ops" data-short="配" onclick="showTab('config', this)">配置</button>
 <button class="tab" data-group="ops" data-short="备" onclick="showTab('backup', this)">备份</button>
@@ -1279,15 +1279,19 @@ if(!accounts.length){
 box.innerHTML = '<div class="small">无账号数据</div>';
 return;
 }
-box.innerHTML = accounts.map(acc => {
+box.innerHTML = accounts.map((acc, idx) => {
 const models = acc.byModel || [];
+const id = 'session-detail-' + idx;
 return `<div style="margin-bottom:16px">
-<h3>${esc(acc.accountKey)} 
-<span class="tag">${acc.total}个会话</span>
+<h3 style="cursor:pointer" onclick="document.getElementById('${id}').classList.toggle('hide')">
+<span style="display:inline-block;width:20px">▶</span>
+${esc(acc.accountKey)} 
+<span class="tag">${acc.total}个</span>
 <span class="tag ${acc.idle > 0 ? 'ok' : ''}">${acc.idle}空闲</span>
 <span class="tag">${acc.using}使用中</span>
-<button class="mini-btn" onclick="deleteSessionsBatch('${esc(acc.accountKey)}')">批量删除</button>
+<button class="mini-btn" onclick="event.stopPropagation();deleteSessionsBatch('${esc(acc.accountKey)}')">批量删除</button>
 </h3>
+<div id="${id}" class="hide">
 <table class="data-table"><thead><tr>
 <th>模型</th><th>总数</th><th>空闲</th><th>使用中</th>
 </tr></thead><tbody>${models.map(m => `<tr>
@@ -1296,6 +1300,7 @@ return `<div style="margin-bottom:16px">
 <td>${m.idle}</td>
 <td>${m.using}</td>
 </tr>`).join('')}</tbody></table>
+</div>
 </div>`;
 }).join('');
 }catch(e){ showBoxError('sessionsBox', '加载会话池失败', e); }
