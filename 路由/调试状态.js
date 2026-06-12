@@ -1308,16 +1308,23 @@ router.post('/sessions/delete-batch', async (req, res) => {
       });
     }
     
-    // 取前N个会话ID
-    const toDelete = allSessions.slice(0, count).map(s => s.id);
+    // 优先选择空闲会话删除
+    const idleSessions = allSessions.filter(s => s.idle);
+    const usingSessions = allSessions.filter(s => !s.idle);
+    const toDelete = [...idleSessions, ...usingSessions].slice(0, count).map(s => s.id);
     
-    // 调用批量删除
+    // 调用批量删除云端会话
     await 账号池.带Token重试(accountKey, token => 请求转发.批量删除会话(token, toDelete));
+    
+    // 同步云端会话到本地，会自动移除已删除的会话
+    日志.info('维护接口', `批量删除后同步云端会话到本地`);
+    await 会话同步.同步云端到本地();
     
     事件中心.记录事件('sessions_batch_deleted', '批量删除会话', {
       accountKey,
       requested: count,
       deleted: toDelete.length,
+      idleDeleted: Math.min(idleSessions.length, count),
     }, 'WARN');
     
     res.json({
@@ -1326,7 +1333,8 @@ router.post('/sessions/delete-batch', async (req, res) => {
       accountKey,
       requested: count,
       deleted: toDelete.length,
-      message: `已删除 ${toDelete.length} 个会话`,
+      idleDeleted: Math.min(idleSessions.length, count),
+      message: `已删除 ${toDelete.length} 个会话（其中 ${Math.min(idleSessions.length, count)} 个空闲）`,
     });
   } catch (err) {
     日志.error('维护接口', '批量删除会话失败: ' + (err.message || ''));
