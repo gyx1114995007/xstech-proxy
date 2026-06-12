@@ -111,6 +111,23 @@ async function 识别图片(files, userQuestion = '') {
   const 配置 = 运行配置.获取配置();
   const visionConfig = 配置.visionAssist || {};
   const visionModel = visionConfig.model || 'openai::gpt-4-turbo';
+  const maxImagesPerCall = visionConfig.maxImagesPerCall || 8;
+  
+  日志.info('视觉辅助', `使用模型 ${visionModel} 识别 ${files.length} 个文件，单次最多 ${maxImagesPerCall} 张`);
+  
+  // 如果图片数量超过单次限制，分批识别
+  if (files.length > maxImagesPerCall) {
+    return await 分批识别(files, visionModel, visionConfig, userQuestion, maxImagesPerCall);
+  }
+  
+  // 单次识别
+  return await 单次识别(files, visionModel, visionConfig, userQuestion);
+}
+
+/**
+ * 单次识别（不超过maxImagesPerCall张图片）
+ */
+async function 单次识别(files, visionModel, visionConfig, userQuestion) {
   let prompt = visionConfig.prompt || '请详细描述这张图片的内容。';
   
   // 多图片时优化提示词
@@ -124,8 +141,6 @@ async function 识别图片(files, userQuestion = '') {
 
 原始提示：${prompt}`;
   }
-  
-  日志.info('视觉辅助', `使用模型 ${visionModel} 识别 ${files.length} 个文件`);
   
   // 构造识别请求
   const messages = [{
@@ -181,8 +196,54 @@ async function 识别图片(files, userQuestion = '') {
       错误: err.message || '未知错误',
     });
     
-    return '[图片识别失败: ' + (err.message || '未知错误') + ']';
+    throw err; // 抛出错误供分批识别处理
   }
+}
+
+/**
+ * 分批识别并聚合结果
+ */
+async function 分批识别(files, visionModel, visionConfig, userQuestion, maxImagesPerCall) {
+  日志.info('视觉辅助', `图片数量 ${files.length} 超过单次限制 ${maxImagesPerCall}，启动分批识别`);
+  
+  const batches = [];
+  for (let i = 0; i < files.length; i += maxImagesPerCall) {
+    batches.push(files.slice(i, i + maxImagesPerCall));
+  }
+  
+  日志.info('视觉辅助', `分为 ${batches.length} 批，每批最多 ${maxImagesPerCall} 张`);
+  
+  const results = [];
+  let totalDuration = 0;
+  let successCount = 0;
+  let failCount = 0;
+  
+  for (let i = 0; i < batches.length; i++) {
+    const batch = batches[i];
+    const batchStart = i * maxImagesPerCall;
+    
+    try {
+      日志.info('视觉辅助', `开始识别第 ${i + 1}/${batches.length} 批（图片 ${batchStart + 1}-${batchStart + batch.length}）`);
+      
+      const result = await 单次识别(batch, visionModel, visionConfig, i === 0 ? userQuestion : '');
+      
+      // 添加批次标记
+      results.push(`\n【第${i + 1}批：图片${batchStart + 1}-${batchStart + batch.length}】\n${result}`);
+      successCount++;
+      
+    } catch (err) {
+      日志.error('视觉辅助', `第 ${i + 1} 批识别失败: ${err.message}`);
+      results.push(`\n【第${i + 1}批：图片${batchStart + 1}-${batchStart + batch.length} - 识别失败】\n错误: ${err.message}`);
+      failCount++;
+    }
+  }
+  
+  // 聚合结果
+  const finalResult = `【分批识别结果】共 ${files.length} 张图片，分 ${batches.length} 批识别，成功 ${successCount} 批，失败 ${failCount} 批\n` + results.join('\n');
+  
+  日志.info('视觉辅助', `分批识别完成，成功 ${successCount}/${batches.length} 批`);
+  
+  return finalResult;
 }
 
 /**
