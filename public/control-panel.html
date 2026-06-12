@@ -2167,23 +2167,30 @@ async function loadVisionConfig() {
     $('visionRetry').value = config.retryTimes || 1;
     $('visionPrompt').value = config.prompt || '';
     
-    const modelsData = await getJson('/v1/models');
-    const models = modelsData.data || [];
-    const select = $('visionModel');
-    select.innerHTML = '<option value="">（未选择）</option>';
-    
-    const priceData = await getJson('/debug/backup/file/模型价格.json');
-    const prices = priceData?.file?.json?.模型价格 || [];
-    const visionModels = prices.filter(p => p.capabilities?.imageInput).map(p => p.value);
-    
-    for (const m of models) {
-      if (visionModels.includes(m.id)) {
-        const opt = document.createElement('option');
-        opt.value = m.id;
-        opt.textContent = m.id;
-        if (config.model === m.id) opt.selected = true;
-        select.appendChild(opt);
+    // 加载视觉模型列表
+    try {
+      const modelsData = await getJson('/v1/models');
+      const models = modelsData.data || [];
+      const select = $('visionModel');
+      select.innerHTML = '<option value="">（未选择）</option>';
+      
+      // 只显示支持图片的模型
+      const priceData = await getJson('/debug/backup/file/模型价格.json');
+      const prices = priceData?.file?.json?.模型价格 || [];
+      const visionModels = prices.filter(p => p.capabilities?.imageInput).map(p => p.value);
+      
+      for (const m of models) {
+        if (visionModels.includes(m.id)) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.id;
+          if (config.model === m.id) opt.selected = true;
+          select.appendChild(opt);
+        }
       }
+    } catch (modelErr) {
+      console.error('加载视觉模型列表失败:', modelErr);
+      toast('加载视觉模型列表失败: ' + errorText(modelErr), 'warn');
     }
     
     toast('配置已读取', 'ok');
@@ -2303,7 +2310,6 @@ function filterVisionModels() {
             <td>
               <input type="checkbox" 
                 data-model-id="${esc(m.id)}" 
-                ${!m.imageInput ? 'disabled' : ''} 
                 onchange="toggleModelVision('${esc(m.id)}', this.checked)"
                 style="width:auto">
             </td>
