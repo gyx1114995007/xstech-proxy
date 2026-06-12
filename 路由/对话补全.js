@@ -11,6 +11,7 @@ const OpenAI错误 = require('../工具/OpenAI错误');
 const 运行指标 = require('../工具/运行指标');
 const 链路追踪 = require('../工具/链路追踪');
 const { 校验模型文件能力 } = require('../工具/模型能力校验');
+const 视觉辅助 = require('../工具/视觉辅助');
 const router = express.Router();
 
 function 是取消错误(err) {
@@ -68,6 +69,24 @@ router.post('/chat/completions', async (req, res) => {
     const toolNonce = 注入结果.toolNonce;
     if (请求追踪) 请求追踪.setMeta({ xstechModel, filesCount: upstreamFiles.length });
     校验模型文件能力(openaiModel, upstreamFiles);
+    
+    // 视觉辅助处理：为不支持图片的模型提供视觉能力
+    const modelCaps = 模型映射.getModelCapabilities(xstechModel);
+    const 视觉辅助请求 = {
+      messages: body.messages || [],
+      _responsesFiles: upstreamFiles,
+    };
+    const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, modelCaps);
+    if (处理后请求.messages !== 视觉辅助请求.messages) {
+      // 视觉辅助已生效，更新消息和文件
+      const 重新注入 = await 注入器.注入({ ...body, messages: 处理后请求.messages });
+      userText = 重新注入.text;
+      upstreamFiles.length = 0;
+      upstreamFiles.push(...(处理后请求._responsesFiles || []));
+      if (请求追踪) 请求追踪.setMeta({ filesCount: upstreamFiles.length, visionAssist: true });
+      日志.info('对话补全', '[视觉辅助] 已启用，文件数: ' + upstreamFiles.length);
+    }
+    
     日志.info('对话补全', '模型:' + openaiModel + ' -> ' + xstechModel + ' stream=' + (body.stream !== false) + ' files=' + upstreamFiles.length);
 
     abortController = new AbortController();

@@ -360,6 +360,19 @@ function getModelPrices() {
   return 模型价格缓存 || [];
 }
 
+function getModelCapabilities(xstechModel) {
+  if (!xstechModel) return {};
+  
+  // 从价格缓存中查找模型能力
+  const priceItem = (模型价格缓存 || []).find(p => p.value === xstechModel || p.id === xstechModel);
+  if (priceItem && priceItem.capabilities) {
+    return priceItem.capabilities;
+  }
+  
+  // 默认返回空对象
+  return {};
+}
+
 function 获取价格状态() {
   return {
     count: Array.isArray(模型价格缓存) ? 模型价格缓存.length : 0,
@@ -383,4 +396,4 @@ function 获取状态() {
   };
 }
 
-module.exports = { 初始化, 刷新, 启动自动刷新, 重启自动刷新, toXstechModel, getModels, getModelPrices, 读取价格变化历史, 获取价格历史状态, 获取状态, 获取价格状态 };
+module.exports = { 初始化, 刷新, 启动自动刷新, 重启自动刷新, toXstechModel, getModels, getModelPrices, getModelCapabilities, 读取价格变化历史, 获取价格历史状态, 获取状态, 获取价格状态 };
