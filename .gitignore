@@ -44,3 +44,15 @@ logs/
 手动备份/
 *.bak
 *.backup
+
+# 运行时数据文件（不提交）
+会话池.json
+模型映射.json
+模型价格.json
+账号token.json
+运行配置.json
+响应历史.jsonl
+事件日志.jsonl
+Responses文件上下文.jsonl
+模型价格变化历史.jsonl
+运行配置历史.jsonl
