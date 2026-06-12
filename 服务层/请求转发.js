@@ -147,12 +147,23 @@ headers: 通用头(token),
 return res.data.data;
 },
 async 获取会话详情(token, sessionId) {
-const res = await 上游请求('获取会话详情', {
-method: 'get',
-url: BASE + '/api/chat/session/' + encodeURIComponent(sessionId),
-headers: 通用头(token),
-});
-return res.data.data;
+// xs没有单独获取会话详情的API，需要从会话列表中查找
+const firstPage = await this.获取会话列表(token, 1);
+const pages = firstPage?.pages || 1;
+const records = firstPage?.records || [];
+
+// 先在第一页查找
+let session = records.find(s => s.id === sessionId);
+if (session) return session;
+
+// 如果第一页没找到，遍历所有页
+for (let page = 2; page <= Math.min(pages, 10); page++) {
+const data = await this.获取会话列表(token, page);
+session = (data?.records || []).find(s => s.id === sessionId);
+if (session) return session;
+}
+
+throw new Error('会话不存在或已被删除');
 },
 async 创建会话(token, model) {
     const body = { model, plugins: [], mcp: [], webSearch: false };
