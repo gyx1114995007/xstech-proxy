@@ -1307,23 +1307,20 @@ ${esc(acc.accountKey)}
 }
 
 async function deleteSessionsBatch(accountKey){
-const count = prompt(`请输入要删除的会话数量（1-500）\n\n账号: ${accountKey}`, '100');
+const count = prompt(`请输入要删除的空闲会话数量（1-500）\n\n账号: ${accountKey}`, '100');
 if(!count) return;
 const num = Number(count);
 if(isNaN(num) || num < 1 || num > 500){
 alert('删除数量必须在 1-500 之间');
 return;
 }
-if(!confirm(`确认删除账号 ${accountKey} 的 ${num} 个会话？`)) return;
+if(!confirm(`确认删除账号 ${accountKey} 的 ${num} 个空闲会话？\n\n注意：只删除空闲会话，不删除使用中的会话。`)) return;
 try{
-showLoading();
 const result = await postJson('/debug/sessions/delete-batch', {accountKey, count: num});
-toast(`已删除 ${result.deleted} 个会话`, 'ok');
+toast(result.message || `已删除 ${result.deleted} 个空闲会话`, 'ok');
 loadSessionsTab();
 }catch(e){
 toast('删除失败: ' + errorText(e), 'bad');
-}finally{
-hideLoading();
 }
 }
 
