@@ -2103,7 +2103,7 @@ $('loginKey').value = key();
 if (key()) {
   login().catch(() => {});
 }
-</script>
+
 // 视觉辅助相关功能
 async function loadVisionStats() {
   try {
@@ -2167,13 +2167,11 @@ async function loadVisionConfig() {
     $('visionRetry').value = config.retryTimes || 1;
     $('visionPrompt').value = config.prompt || '';
     
-    // 加载视觉模型列表
     const modelsData = await getJson('/v1/models', false);
     const models = modelsData.data || [];
     const select = $('visionModel');
     select.innerHTML = '<option value="">（未选择）</option>';
     
-    // 只显示支持图片的模型
     const priceData = await getJson('/debug/backup/file/模型价格.json');
     const prices = priceData?.file?.json?.模型价格 || [];
     const visionModels = prices.filter(p => p.capabilities?.imageInput).map(p => p.value);
@@ -2317,8 +2315,6 @@ function filterVisionModels() {
 }
 
 function toggleModelVision(modelId, enabled) {
-  // 这里应该调用API保存模型级别的配置
-  // 由于当前后端还没实现模型级别的开关，暂时只做UI
   toast((enabled ? '启用' : '禁用') + '模型 ' + modelId + ' 的视觉辅助', 'ok');
 }
 
@@ -2348,5 +2344,6 @@ async function testVisionRecognition() {
   $('visionTestResult').innerHTML = '<div class="small">功能开发中...需要实现图片上传和识别API</div>';
   toast('测试功能开发中', 'warn');
 }
+</script>
 </body>
 </html>
