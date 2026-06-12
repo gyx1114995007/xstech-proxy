@@ -8,6 +8,78 @@ const { 解析ChatSSE } = require('./ChatSSE解析');
  * 为不支持图片的模型提供视觉能力
  */
 
+// 统计数据
+let 统计数据 = {
+  总调用次数: 0,
+  成功次数: 0,
+  失败次数: 0,
+  总耗时: 0,
+  总图片数: 0,
+  最近调用时间: null,
+};
+
+// 识别历史（最多保留100条）
+let 识别历史 = [];
+const 最大历史记录数 = 100;
+
+/**
+ * 记录识别统计
+ */
+function 记录识别统计(success, duration, imageCount) {
+  统计数据.总调用次数++;
+  if (success) {
+    统计数据.成功次数++;
+  } else {
+    统计数据.失败次数++;
+  }
+  统计数据.总耗时 += duration;
+  统计数据.总图片数 += imageCount;
+  统计数据.最近调用时间 = new Date().toISOString();
+}
+
+/**
+ * 添加识别历史
+ */
+function 添加识别历史(record) {
+  识别历史.unshift(record);
+  if (识别历史.length > 最大历史记录数) {
+    识别历史 = 识别历史.slice(0, 最大历史记录数);
+  }
+}
+
+/**
+ * 获取统计数据
+ */
+function 获取统计() {
+  return {
+    ...统计数据,
+    平均耗时: 统计数据.总调用次数 > 0 ? Math.round(统计数据.总耗时 / 统计数据.总调用次数) : 0,
+    成功率: 统计数据.总调用次数 > 0 ? Math.round((统计数据.成功次数 / 统计数据.总调用次数) * 100) : 0,
+  };
+}
+
+/**
+ * 获取识别历史
+ */
+function 获取历史(limit = 20) {
+  return 识别历史.slice(0, limit);
+}
+
+/**
+ * 清空统计
+ */
+function 清空统计() {
+  统计数据 = {
+    总调用次数: 0,
+    成功次数: 0,
+    失败次数: 0,
+    总耗时: 0,
+    总图片数: 0,
+    最近调用时间: null,
+  };
+  识别历史 = [];
+}
+
 /**
  * 检查模型是否需要视觉辅助
  * @param {Object} modelCaps - 模型能力对象 {imageInput: boolean}
@@ -39,7 +111,19 @@ async function 识别图片(files, userQuestion = '') {
   const 配置 = 运行配置.获取配置();
   const visionConfig = 配置.visionAssist || {};
   const visionModel = visionConfig.model || 'openai::gpt-4-turbo';
-  const prompt = visionConfig.prompt || '请详细描述这张图片的内容。';
+  let prompt = visionConfig.prompt || '请详细描述这张图片的内容。';
+  
+  // 多图片时优化提示词
+  if (files.length > 1) {
+    prompt = `请分别描述这${files.length}张图片的内容，格式如下：
+第1张图片：[详细描述]
+第2张图片：[详细描述]
+...
+
+如果图片之间有关联，请在最后说明。
+
+原始提示：${prompt}`;
+  }
   
   日志.info('视觉辅助', `使用模型 ${visionModel} 识别 ${files.length} 个文件`);
   
@@ -53,7 +137,7 @@ async function 识别图片(files, userQuestion = '') {
     model: visionModel,
     messages,
     stream: true,
-    max_tokens: 1000,
+    max_tokens: 1000 + (files.length * 300), // 根据图片数量动态调整
     temperature: 0.3,
     _responsesFiles: files, // 内部文件传递
   };
@@ -66,9 +150,37 @@ async function 识别图片(files, userQuestion = '') {
     
     日志.info('视觉辅助', `识别完成，耗时 ${duration}ms，结果长度 ${state.content?.length || 0} 字符`);
     
+    // 记录统计
+    记录识别统计(true, duration, files.length);
+    
+    // 添加历史记录
+    添加识别历史({
+      时间: new Date().toISOString(),
+      模型: visionModel,
+      图片数: files.length,
+      文件名: files.map(f => f.name || f.filename || '未知').join(', '),
+      耗时: duration,
+      成功: true,
+      结果摘要: (state.content || '').slice(0, 100) + (state.content?.length > 100 ? '...' : ''),
+      完整结果: state.content || '',
+    });
+    
     return state.content || '[图片识别失败]';
   } catch (err) {
     日志.error('视觉辅助', '识别失败: ' + (err.message || err));
+    记录识别统计(false, 0, files.length);
+    
+    // 添加失败记录
+    添加识别历史({
+      时间: new Date().toISOString(),
+      模型: visionModel,
+      图片数: files.length,
+      文件名: files.map(f => f.name || f.filename || '未知').join(', '),
+      耗时: 0,
+      成功: false,
+      错误: err.message || '未知错误',
+    });
+    
     return '[图片识别失败: ' + (err.message || '未知错误') + ']';
   }
 }
@@ -228,4 +340,7 @@ module.exports = {
   注入识别结果,
   移除图片内容,
   处理视觉辅助,
+  获取统计,
+  获取历史,
+  清空统计,
 };

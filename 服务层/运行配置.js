@@ -39,6 +39,9 @@ visionAssist: {
   prompt: '请详细描述这张图片的内容，包括：主要物体和场景、颜色位置数量等细节、图片中的文字（如果有）、整体氛围和风格。用简洁准确的语言描述。',
   injectPosition: 'separate',
   showInResponse: true,
+  maxImagesPerCall: 8,
+  recognitionTimeout: 30000,
+  retryTimes: 1,
 },
 };
 let 当前配置 = { ...默认配置 };
