@@ -3,6 +3,23 @@
   "说明": "自动收集未命中精细规则的模型 SSE 流错误样例。用于后续补充 模型流错误规则.json。",
   "样例": [
     {
+      "time": "2026-06-12T10:36:02.363Z",
+      "type": "model_stream_error",
+      "xstechCode": 1,
+      "message": "Anthropic 异常(HttpCode:400): <nil> - ***.***.***.***.***.source.base64.media_type: Input should be 'image/jpeg', 'image/png', 'image/gif' or 'image/webp' (request id: 20260612103559956046710o03P7Yfi)",
+      "data": null,
+      "count": 1
+    },
+    {
+      "time": "2026-06-12T09:58:12.017Z",
+      "type": "model_stream_error",
+      "xstechCode": 1,
+      "message": "对话不存在",
+      "data": null,
+      "count": 5,
+      "lastSeen": "2026-06-12T10:27:47.349Z"
+    },
+    {
       "time": "2026-06-09T15:33:14.779Z",
       "type": "model_stream_error",
       "xstechCode": 1,

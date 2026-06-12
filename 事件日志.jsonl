@@ -61,3 +61,14 @@
 {"time":"2026-06-11T09:22:18.643Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
 {"time":"2026-06-11T09:23:06.497Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
 {"time":"2026-06-11T09:23:11.770Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T08:28:58.999Z","level":"WARN","type":"sessions_batch_deleted","title":"批量删除会话","data":{"accountKey":"acc_0","requested":10,"deleted":10}}
+{"time":"2026-06-12T08:32:04.162Z","level":"WARN","type":"sessions_batch_deleted","title":"批量删除会话","data":{"accountKey":"acc_0","requested":260,"deleted":260}}
+{"time":"2026-06-12T08:41:57.485Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T09:24:50.330Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T09:24:58.798Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T09:58:09.037Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T09:58:09.042Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T10:18:54.206Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T10:28:54.724Z","level":"WARN","type":"sessions_batch_deleted","title":"批量删除会话","data":{"accountKey":"acc_0","requested":10,"deleted":2}}
+{"time":"2026-06-12T10:29:27.272Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-12T10:31:48.280Z","level":"WARN","type":"sessions_batch_deleted","title":"批量删除会话","data":{"accountKey":"acc_0","requested":100,"deleted":2}}

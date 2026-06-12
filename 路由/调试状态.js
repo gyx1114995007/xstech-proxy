@@ -1,4 +1,3 @@
-
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
@@ -13,6 +12,7 @@ const 会话同步 = require('../服务层/会话同步');
 const OpenAI错误 = require('../工具/OpenAI错误');
 const 日志 = require('../工具/日志');
 const 模型流错误分类 = require('../工具/模型流错误分类');
+const 视觉辅助 = require('../工具/视觉辅助');
 
 
 const 自动签到 = require('../服务层/自动签到');
@@ -1350,6 +1350,67 @@ router.post('/sessions/delete-batch', async (req, res) => {
       message: err.message || '批量删除会话失败',
       type: 'server_error',
       code: 'delete_sessions_batch_failed',
+      detail: 脱敏错误摘要(err),
+    });
+  }
+});
+
+// 视觉辅助统计
+router.get('/vision-assist/stats', async (_req, res) => {
+  try {
+    const stats = 视觉辅助.获取统计();
+    res.json({
+      ok: true,
+      action: 'vision-assist-stats',
+      stats,
+    });
+  } catch (err) {
+    OpenAI错误.返回错误(res, 500, {
+      message: err.message || '获取视觉辅助统计失败',
+      type: 'server_error',
+      code: 'vision_assist_stats_failed',
+      detail: 脱敏错误摘要(err),
+    });
+  }
+});
+
+// 视觉辅助历史记录
+router.get('/vision-assist/history', async (req, res) => {
+  try {
+    const limit = Number(req.query.limit || 20);
+    const history = 视觉辅助.获取历史(limit);
+    res.json({
+      ok: true,
+      action: 'vision-assist-history',
+      limit,
+      count: history.length,
+      history,
+    });
+  } catch (err) {
+    OpenAI错误.返回错误(res, 500, {
+      message: err.message || '获取视觉辅助历史失败',
+      type: 'server_error',
+      code: 'vision_assist_history_failed',
+      detail: 脱敏错误摘要(err),
+    });
+  }
+});
+
+// 清空视觉辅助统计
+router.post('/vision-assist/clear-stats', async (_req, res) => {
+  try {
+    视觉辅助.清空统计();
+    事件中心.记录事件('vision_assist_stats_cleared', '视觉辅助统计已清空', {}, 'INFO');
+    res.json({
+      ok: true,
+      action: 'vision-assist-clear-stats',
+      message: '统计和历史已清空',
+    });
+  } catch (err) {
+    OpenAI错误.返回错误(res, 500, {
+      message: err.message || '清空视觉辅助统计失败',
+      type: 'server_error',
+      code: 'vision_assist_clear_stats_failed',
       detail: 脱敏错误摘要(err),
     });
   }

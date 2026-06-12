@@ -118,6 +118,7 @@
       <button class="tab" data-group="core" data-short="积" onclick="showTab('billing', this)">积分</button>
 <button class="tab" data-group="core" data-short="模" onclick="showTab('models', this)">模型</button>
 <button class="tab" data-group="core" data-short="话" onclick="showTab('sessions', this)">会话池</button>
+<button class="tab" data-group="core" data-short="视" onclick="showTab('vision', this)">视觉辅助</button>
 
 <button class="tab" data-group="ops" data-short="配" onclick="showTab('config', this)">配置</button>
 <button class="tab" data-group="ops" data-short="备" onclick="showTab('backup', this)">备份</button>
@@ -220,6 +221,83 @@
 </section>
 </div>
 
+<div id="tab-vision" class="tabPage grid hide" style="margin-top:8px">
+  <section class="card wide">
+    <h2>视觉辅助统计 <button class="mini-btn" onclick="loadVisionStats()">刷新</button></h2>
+    <div class="small" style="margin-bottom:12px">为不支持图片的模型提供视觉能力，自动调用视觉模型识别图片内容。</div>
+    <div id="visionStatsBox" class="kv"><div class="small">未加载</div></div>
+  </section>
+
+  <section class="card span6">
+    <h2>全局配置 <button class="mini-btn" onclick="loadVisionConfig()">读取配置</button></h2>
+    <div class="stack">
+      <label class="small"><input id="visionEnabled" type="checkbox" style="width:auto;vertical-align:middle"> 启用视觉辅助</label>
+      <label class="small">视觉模型
+        <select id="visionModel">
+          <option value="">（未加载）</option>
+        </select>
+      </label>
+      <label class="small">显示模式
+        <select id="visionMode">
+          <option value="explicit">显示标记（explicit）</option>
+          <option value="transparent">透明（transparent）</option>
+        </select>
+      </label>
+      <label class="small">注入位置
+        <select id="visionInjectPosition">
+          <option value="separate">单独消息（separate）</option>
+          <option value="append">追加到用户消息（append）</option>
+          <option value="system">系统消息（system）</option>
+        </select>
+      </label>
+      <label class="small"><input id="visionShowInResponse" type="checkbox" style="width:auto;vertical-align:middle"> 在识别结果中显示提示</label>
+      <label class="small">单次最多识别图片数<input id="visionMaxImages" type="number" min="1" max="20" value="8"></label>
+      <label class="small">识别超时（毫秒）<input id="visionTimeout" type="number" min="5000" max="120000" step="1000" value="30000"></label>
+      <label class="small">失败重试次数<input id="visionRetry" type="number" min="0" max="5" value="1"></label>
+      <label class="small">识别提示词<textarea id="visionPrompt" rows="4" placeholder="请详细描述这张图片的内容..."></textarea></label>
+      <div class="row">
+        <button class="primary" onclick="saveVisionConfig()">保存配置</button>
+        <button onclick="loadVisionConfig()">重新读取</button>
+        <button class="danger" onclick="clearVisionStats()">清空统计</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card span6">
+    <h2>识别历史 <button class="mini-btn" onclick="loadVisionHistory()">刷新</button></h2>
+    <div id="visionHistoryBox" style="max-height:400px;overflow:auto"><div class="small">未加载</div></div>
+  </section>
+
+  <section class="card wide">
+    <h2>模型列表与视觉辅助开关 <button class="mini-btn" onclick="loadVisionModels()">刷新</button></h2>
+    <div class="small" style="margin-bottom:8px">显示所有模型的图片支持能力，并可为特定模型单独启用视觉辅助。</div>
+    <div class="form2" style="margin-bottom:8px">
+      <label class="small">筛选<input id="visionModelsFilter" placeholder="模型名称或provider" onkeyup="filterVisionModels()"></label>
+      <label class="small">能力筛选
+        <select id="visionCapFilter" onchange="filterVisionModels()">
+          <option value="">全部</option>
+          <option value="image">支持图片</option>
+          <option value="noimage">不支持图片</option>
+        </select>
+      </label>
+    </div>
+    <div class="row" style="margin-bottom:8px">
+      <button onclick="batchEnableVision(true)">批量启用（不支持图片的模型）</button>
+      <button onclick="batchEnableVision(false)">批量禁用（所有模型）</button>
+    </div>
+    <div id="visionModelsBox"><div class="small">未加载</div></div>
+  </section>
+
+  <section class="card wide">
+    <h2>测试识别 <button class="mini-btn" onclick="testVisionRecognition()">开始测试</button></h2>
+    <div class="small" style="margin-bottom:8px">上传图片测试视觉辅助识别效果（需要先启用视觉辅助）。</div>
+    <div class="stack">
+      <input id="visionTestFile" type="file" accept="image/*" multiple>
+      <button class="primary" onclick="testVisionRecognition()">测试识别</button>
+      <div id="visionTestResult"></div>
+    </div>
+  </section>
+</div>
 <div id="tab-config" class="tabPage grid hide" style="margin-top:8px">
       <section class="card span6">
         <h2>运行配置</h2>
@@ -697,6 +775,7 @@ document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
 if (btn) btn.classList.add('active');
 if (name === 'config') loadRuntimeConfig();
 if (name === 'models') loadModelsTab();
+if (name === 'vision') { loadVisionStats(); loadVisionConfig(); loadVisionHistory(); loadVisionModels(); }
 if (name === 'sessions') loadSessionsTab();
 }
 
@@ -2025,5 +2104,249 @@ if (key()) {
   login().catch(() => {});
 }
 </script>
+// 视觉辅助相关功能
+async function loadVisionStats() {
+  try {
+    const data = await getJson('/debug/vision-assist/stats');
+    const stats = data.stats || {};
+    $('visionStatsBox').innerHTML = kv([
+      ['总调用次数', stats.总调用次数 || 0],
+      ['成功次数', (stats.成功次数 || 0) + ' (' + (stats.成功率 || 0) + '%)'],
+      ['失败次数', stats.失败次数 || 0, stats.失败次数 > 0 ? 'bad' : ''],
+      ['总图片数', stats.总图片数 || 0],
+      ['平均耗时', (stats.平均耗时 || 0) + 'ms'],
+      ['最近调用', fmtTime(stats.最近调用时间)],
+    ]);
+    toast('统计已刷新', 'ok');
+  } catch (e) {
+    showBoxError('visionStatsBox', '加载统计失败', e);
+  }
+}
+
+async function loadVisionHistory() {
+  try {
+    const data = await getJson('/debug/vision-assist/history?limit=20');
+    const history = data.history || [];
+    if (!history.length) {
+      $('visionHistoryBox').innerHTML = '<div class="small">暂无历史记录</div>';
+      return;
+    }
+    $('visionHistoryBox').innerHTML = history.map(h => `
+      <div class="account-card" style="margin-bottom:6px">
+        <div class="kv">
+          ${kv([
+            ['时间', fmtTime(h.时间)],
+            ['模型', esc(h.模型 || '-')],
+            ['图片数', h.图片数 || 0],
+            ['耗时', (h.耗时 || 0) + 'ms'],
+            ['状态', h.成功 ? '<span class="ok">✓ 成功</span>' : '<span class="bad">✗ 失败</span>'],
+          ])}
+        </div>
+        ${h.文件名 ? '<div class="small" style="margin-top:4px">文件: ' + esc(h.文件名) + '</div>' : ''}
+        ${h.成功 && h.结果摘要 ? '<details style="margin-top:6px"><summary class="small">识别结果</summary><pre style="margin-top:6px">' + esc(h.完整结果 || h.结果摘要) + '</pre></details>' : ''}
+        ${!h.成功 && h.错误 ? '<div class="small bad" style="margin-top:4px">错误: ' + esc(h.错误) + '</div>' : ''}
+      </div>
+    `).join('');
+    toast('历史已刷新', 'ok');
+  } catch (e) {
+    showBoxError('visionHistoryBox', '加载历史失败', e);
+  }
+}
+
+async function loadVisionConfig() {
+  try {
+    const data = await getJson('/debug/config');
+    const config = data.runtime?.config?.visionAssist || {};
+    
+    $('visionEnabled').checked = config.enabled || false;
+    $('visionMode').value = config.mode || 'explicit';
+    $('visionInjectPosition').value = config.injectPosition || 'separate';
+    $('visionShowInResponse').checked = config.showInResponse !== false;
+    $('visionMaxImages').value = config.maxImagesPerCall || 8;
+    $('visionTimeout').value = config.recognitionTimeout || 30000;
+    $('visionRetry').value = config.retryTimes || 1;
+    $('visionPrompt').value = config.prompt || '';
+    
+    // 加载视觉模型列表
+    const modelsData = await getJson('/v1/models', false);
+    const models = modelsData.data || [];
+    const select = $('visionModel');
+    select.innerHTML = '<option value="">（未选择）</option>';
+    
+    // 只显示支持图片的模型
+    const priceData = await getJson('/debug/backup/file/模型价格.json');
+    const prices = priceData?.file?.json?.模型价格 || [];
+    const visionModels = prices.filter(p => p.capabilities?.imageInput).map(p => p.value);
+    
+    for (const m of models) {
+      if (visionModels.includes(m.id)) {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = m.id;
+        if (config.model === m.id) opt.selected = true;
+        select.appendChild(opt);
+      }
+    }
+    
+    toast('配置已读取', 'ok');
+  } catch (e) {
+    toast('读取配置失败: ' + errorText(e), 'bad');
+  }
+}
+
+async function saveVisionConfig() {
+  try {
+    const config = {
+      visionAssist: {
+        enabled: $('visionEnabled').checked,
+        model: $('visionModel').value || 'openai::gpt-4-turbo',
+        mode: $('visionMode').value,
+        prompt: $('visionPrompt').value.trim(),
+        injectPosition: $('visionInjectPosition').value,
+        showInResponse: $('visionShowInResponse').checked,
+        maxImagesPerCall: Number($('visionMaxImages').value) || 8,
+        recognitionTimeout: Number($('visionTimeout').value) || 30000,
+        retryTimes: Number($('visionRetry').value) || 1,
+      }
+    };
+    
+    await postJson('/debug/maintenance/config', config);
+    toast('配置已保存', 'ok');
+    await loadVisionConfig();
+  } catch (e) {
+    toast('保存配置失败: ' + errorText(e), 'bad');
+  }
+}
+
+async function clearVisionStats() {
+  if (!confirm('确定要清空视觉辅助的统计和历史记录吗？')) return;
+  try {
+    await postJson('/debug/vision-assist/clear-stats');
+    toast('统计已清空', 'ok');
+    await loadVisionStats();
+    await loadVisionHistory();
+  } catch (e) {
+    toast('清空统计失败: ' + errorText(e), 'bad');
+  }
+}
+
+let visionModelsCache = [];
+async function loadVisionModels() {
+  try {
+    const [modelsData, priceData] = await Promise.all([
+      getJson('/v1/models', false),
+      getJson('/debug/backup/file/模型价格.json')
+    ]);
+    
+    const models = modelsData.data || [];
+    const prices = priceData?.file?.json?.模型价格 || [];
+    
+    visionModelsCache = models.map(m => {
+      const priceItem = prices.find(p => p.id === m.id || p.value === m.id);
+      return {
+        id: m.id,
+        provider: m.owned_by || '-',
+        imageInput: priceItem?.capabilities?.imageInput || false,
+        anyFile: priceItem?.capabilities?.anyFile || false,
+        price: priceItem?.integral || '-',
+      };
+    });
+    
+    filterVisionModels();
+    toast('模型列表已刷新', 'ok');
+  } catch (e) {
+    showBoxError('visionModelsBox', '加载模型列表失败', e);
+  }
+}
+
+function filterVisionModels() {
+  const keyword = ($('visionModelsFilter')?.value || '').trim().toLowerCase();
+  const capFilter = $('visionCapFilter')?.value || '';
+  
+  let filtered = visionModelsCache;
+  if (keyword) {
+    filtered = filtered.filter(m => 
+      m.id.toLowerCase().includes(keyword) || 
+      m.provider.toLowerCase().includes(keyword)
+    );
+  }
+  
+  if (capFilter === 'image') {
+    filtered = filtered.filter(m => m.imageInput);
+  } else if (capFilter === 'noimage') {
+    filtered = filtered.filter(m => !m.imageInput);
+  }
+  
+  if (!filtered.length) {
+    $('visionModelsBox').innerHTML = '<div class="small">无匹配模型</div>';
+    return;
+  }
+  
+  $('visionModelsBox').innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>模型ID</th>
+          <th>Provider</th>
+          <th>价格</th>
+          <th>支持图片</th>
+          <th>支持文件</th>
+          <th>启用视觉辅助</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map(m => `
+          <tr>
+            <td>${esc(m.id)}</td>
+            <td>${esc(m.provider)}</td>
+            <td>${esc(m.price)}</td>
+            <td>${m.imageInput ? '<span class="ok">✓</span>' : '<span class="muted">✗</span>'}</td>
+            <td>${m.anyFile ? '<span class="ok">✓</span>' : '<span class="muted">✗</span>'}</td>
+            <td>
+              <input type="checkbox" 
+                data-model-id="${esc(m.id)}" 
+                ${!m.imageInput ? 'disabled' : ''} 
+                onchange="toggleModelVision('${esc(m.id)}', this.checked)"
+                style="width:auto">
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function toggleModelVision(modelId, enabled) {
+  // 这里应该调用API保存模型级别的配置
+  // 由于当前后端还没实现模型级别的开关，暂时只做UI
+  toast((enabled ? '启用' : '禁用') + '模型 ' + modelId + ' 的视觉辅助', 'ok');
+}
+
+function batchEnableVision(enable) {
+  const checkboxes = document.querySelectorAll('#visionModelsBox input[type="checkbox"]:not([disabled])');
+  const msg = enable ? '批量启用不支持图片的模型' : '批量禁用所有模型';
+  if (!confirm('确定要' + msg + '的视觉辅助吗？')) return;
+  
+  checkboxes.forEach(cb => {
+    if (enable) {
+      cb.checked = true;
+    } else {
+      cb.checked = false;
+    }
+  });
+  
+  toast(msg + '完成', 'ok');
+}
+
+async function testVisionRecognition() {
+  const fileInput = $('visionTestFile');
+  if (!fileInput.files || !fileInput.files.length) {
+    toast('请先选择图片文件', 'bad');
+    return;
+  }
+  
+  $('visionTestResult').innerHTML = '<div class="small">功能开发中...需要实现图片上传和识别API</div>';
+  toast('测试功能开发中', 'warn');
+}
 </body>
 </html>
