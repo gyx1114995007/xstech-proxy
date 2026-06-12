@@ -180,7 +180,13 @@ for (const s of list) {
 if (!s.used && 内存锁.acquire(锁名(key, s.id), 3600)) {
 s.used = true; s.获取时间 = Date.now();
 try {
-await 账号池.带Token重试(key, token => 请求转发.更新会话(token, { id: s.id, model: m, ...默认参数 }));
+// 先获取完整的会话信息
+const 完整会话 = await 账号池.带Token重试(key, token => 请求转发.获取会话详情(token, s.id));
+if (!完整会话) throw new Error('会话详情不存在');
+// 更新模型字段
+完整会话.model = m;
+// 调用更新API
+await 账号池.带Token重试(key, token => 请求转发.更新会话(token, 完整会话));
 s.model = m;
 list.splice(list.indexOf(s), 1);
 池[key][m] = 池[key][m] || [];

@@ -139,14 +139,22 @@ const 请求转发 = {
     return res.data.data;
   },
   async 获取会话列表(token, page = 1) {
-    const res = await 上游请求('获取会话列表', {
-      method: 'get',
-      url: BASE + '/api/chat/session?page=' + encodeURIComponent(page),
-      headers: 通用头(token),
-    });
-    return res.data.data;
-  },
-  async 创建会话(token, model) {
+const res = await 上游请求('获取会话列表', {
+method: 'get',
+url: BASE + '/api/chat/session?page=' + encodeURIComponent(page),
+headers: 通用头(token),
+});
+return res.data.data;
+},
+async 获取会话详情(token, sessionId) {
+const res = await 上游请求('获取会话详情', {
+method: 'get',
+url: BASE + '/api/chat/session/' + encodeURIComponent(sessionId),
+headers: 通用头(token),
+});
+return res.data.data;
+},
+async 创建会话(token, model) {
     const body = { model, plugins: [], mcp: [], webSearch: false };
     const res = await 上游请求('创建会话', {
       method: 'post',
