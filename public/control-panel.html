@@ -2167,7 +2167,7 @@ async function loadVisionConfig() {
     $('visionRetry').value = config.retryTimes || 1;
     $('visionPrompt').value = config.prompt || '';
     
-    const modelsData = await getJson('/v1/models', false);
+    const modelsData = await getJson('/v1/models');
     const models = modelsData.data || [];
     const select = $('visionModel');
     select.innerHTML = '<option value="">（未选择）</option>';
@@ -2232,7 +2232,7 @@ let visionModelsCache = [];
 async function loadVisionModels() {
   try {
     const [modelsData, priceData] = await Promise.all([
-      getJson('/v1/models', false),
+      getJson('/v1/models'),
       getJson('/debug/backup/file/模型价格.json')
     ]);
     
