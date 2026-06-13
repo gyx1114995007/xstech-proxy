@@ -68,15 +68,14 @@ router.post('/chat/completions', async (req, res) => {
       : [];
     const toolNonce = 注入结果.toolNonce;
     if (请求追踪) 请求追踪.setMeta({ xstechModel, filesCount: upstreamFiles.length });
-    校验模型文件能力(openaiModel, upstreamFiles);
     
-    // 视觉辅助处理：为不支持图片的模型提供视觉能力
+    // 视觉辅助处理：为不支持图片的模型提供视觉能力（在文件能力校验之前）
     const modelCaps = 模型映射.getModelCapabilities(xstechModel);
     const 视觉辅助请求 = {
       messages: body.messages || [],
       _responsesFiles: upstreamFiles,
     };
-    const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, modelCaps);
+    const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, openaiModel, modelCaps);
     if (处理后请求.messages !== 视觉辅助请求.messages) {
       // 视觉辅助已生效，更新消息和文件
       const 重新注入 = await 注入器.注入({ ...body, messages: 处理后请求.messages });
@@ -86,6 +85,9 @@ router.post('/chat/completions', async (req, res) => {
       if (请求追踪) 请求追踪.setMeta({ filesCount: upstreamFiles.length, visionAssist: true });
       日志.info('对话补全', '[视觉辅助] 已启用，文件数: ' + upstreamFiles.length);
     }
+    
+    // 校验模型文件能力（在视觉辅助处理之后）
+    校验模型文件能力(openaiModel, upstreamFiles);
     
     日志.info('对话补全', '模型:' + openaiModel + ' -> ' + xstechModel + ' stream=' + (body.stream !== false) + ' files=' + upstreamFiles.length);
 

@@ -82,15 +82,29 @@ function 清空统计() {
 
 /**
  * 检查模型是否需要视觉辅助
+ * @param {string} modelId - 模型ID（对外id，如 openai-gpt-oss-120b）
  * @param {Object} modelCaps - 模型能力对象 {imageInput: boolean}
  * @param {Array} files - 文件列表
  * @returns {boolean}
  */
-function 需要视觉辅助(modelCaps, files) {
+function 需要视觉辅助(modelId, modelCaps, files) {
   const 配置 = 运行配置.获取配置();
   if (!配置.visionAssist || !配置.visionAssist.enabled) return false;
   if (!files || files.length === 0) return false;
-  if (modelCaps && modelCaps.imageInput) return false; // 模型本身支持图片
+  
+  // 检查该模型是否单独启用了视觉辅助
+  const enabledModels = 配置.visionAssist.enabledModels || [];
+  const isModelEnabled = enabledModels.includes(modelId);
+  
+  // 如果模型已启用视觉辅助，无论是否支持图片都启用
+  if (isModelEnabled) {
+    日志.debug('视觉辅助', `模型 ${modelId} 已单独启用视觉辅助`);
+  } else {
+    // 如果模型未单独启用，且本身支持图片，则不需要视觉辅助
+    if (modelCaps && modelCaps.imageInput) {
+      return false;
+    }
+  }
   
   // 检查是否有图片文件
   const hasImages = files.some(f => {
@@ -349,17 +363,18 @@ function 移除图片内容(messages) {
 /**
  * 主处理函数：为不支持图片的模型添加视觉辅助
  * @param {Object} request - 请求对象
+ * @param {string} modelId - 模型ID（对外id）
  * @param {Object} modelCaps - 模型能力
  * @returns {Promise<Object>} 处理后的请求对象
  */
-async function 处理视觉辅助(request, modelCaps) {
+async function 处理视觉辅助(request, modelId, modelCaps) {
   const files = request._responsesFiles || [];
   
-  if (!需要视觉辅助(modelCaps, files)) {
+  if (!需要视觉辅助(modelId, modelCaps, files)) {
     return request;
   }
   
-  日志.info('视觉辅助', '检测到不支持图片的模型，启用视觉辅助');
+  日志.info('视觉辅助', `模型 ${modelId} 启用视觉辅助`);
   
   const 配置 = 运行配置.获取配置();
   const visionConfig = 配置.visionAssist || {};
