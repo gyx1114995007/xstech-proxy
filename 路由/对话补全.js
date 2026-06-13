@@ -91,7 +91,10 @@ router.post('/chat/completions', async (req, res) => {
       };
       try {
         const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, openaiModel, modelCaps);
-        if (处理后请求.messages !== 视觉辅助请求.messages) {
+        // 🔑 判断视觉辅助是否生效：检查 _responsesFiles 是否被清空
+        const 视觉辅助已生效 = (处理后请求._responsesFiles || []).length === 0 && upstreamFiles.length > 0;
+        
+        if (视觉辅助已生效) {
           // 视觉辅助已生效，更新消息和文件
           // 🔑 关键修复：重新注入时强制清空文件列表，避免注入器从 body._responsesFiles 重复提取文件
           const 重新注入 = await 注入器.注入({ 
