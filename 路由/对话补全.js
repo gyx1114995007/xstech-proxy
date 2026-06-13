@@ -60,6 +60,12 @@ router.post('/chat/completions', async (req, res) => {
 
     请求指标 = 运行指标.开始请求({ model: openaiModel });
 
+    // 视觉辅助跳过标记检查（在注入之前）
+    const skipVisionAssist = body._skipVisionAssist === true;
+    if (skipVisionAssist) {
+      日志.debug('对话补全', '跳过视觉辅助处理（内部调用）');
+    }
+
     const 注入结果 = await 注入器.注入(body);
     let userText = 注入结果.text;
     const upstreamFiles = Array.isArray(body._upstreamFiles) ? body._upstreamFiles
@@ -70,10 +76,7 @@ router.post('/chat/completions', async (req, res) => {
     if (请求追踪) 请求追踪.setMeta({ xstechModel, filesCount: upstreamFiles.length });
     
     // 视觉辅助处理：为不支持图片的模型提供视觉能力（在文件能力校验之前）
-    // 跳过内部调用（防止递归）
-    if (body._skipVisionAssist) {
-      日志.debug('对话补全', '跳过视觉辅助处理（内部调用）');
-    } else {
+    if (!skipVisionAssist) {
       const modelCaps = 模型映射.getModelCapabilities(xstechModel);
       const 视觉辅助请求 = {
         messages: body.messages || [],

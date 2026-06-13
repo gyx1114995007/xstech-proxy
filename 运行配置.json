@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-13T09:40:51.998Z",
+  "updatedAt": "2026-06-13T10:12:32.497Z",
   "config": {
     "modelRefreshIntervalSec": 1800,
     "sessionSyncIntervalMin": 30,
@@ -33,7 +33,10 @@
       "showInResponse": true,
       "maxImagesPerCall": 8,
       "recognitionTimeout": 30000,
-      "retryTimes": 1
+      "retryTimes": 1,
+      "enabledModels": [
+        "openai-gpt-oss-120b"
+      ]
     }
   }
 }
