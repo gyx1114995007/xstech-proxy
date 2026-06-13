@@ -75,15 +75,20 @@ router.post('/chat/completions', async (req, res) => {
       messages: body.messages || [],
       _responsesFiles: upstreamFiles,
     };
-    const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, openaiModel, modelCaps);
-    if (处理后请求.messages !== 视觉辅助请求.messages) {
-      // 视觉辅助已生效，更新消息和文件
-      const 重新注入 = await 注入器.注入({ ...body, messages: 处理后请求.messages });
-      userText = 重新注入.text;
-      upstreamFiles.length = 0;
-      upstreamFiles.push(...(处理后请求._responsesFiles || []));
-      if (请求追踪) 请求追踪.setMeta({ filesCount: upstreamFiles.length, visionAssist: true });
-      日志.info('对话补全', '[视觉辅助] 已启用，文件数: ' + upstreamFiles.length);
+    try {
+      const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, openaiModel, modelCaps);
+      if (处理后请求.messages !== 视觉辅助请求.messages) {
+        // 视觉辅助已生效，更新消息和文件
+        const 重新注入 = await 注入器.注入({ ...body, messages: 处理后请求.messages });
+        userText = 重新注入.text;
+        upstreamFiles.length = 0;
+        upstreamFiles.push(...(处理后请求._responsesFiles || []));
+        if (请求追踪) 请求追踪.setMeta({ filesCount: upstreamFiles.length, visionAssist: true });
+        日志.info('对话补全', '[视觉辅助] 已启用，文件数: ' + upstreamFiles.length);
+      }
+    } catch (visionErr) {
+      日志.error('对话补全', '[视觉辅助] 失败: ' + (visionErr.message || visionErr));
+      // 视觉辅助失败时，继续原流程（会被后续文件校验拒绝）
     }
     
     // 校验模型文件能力（在视觉辅助处理之后）

@@ -96,14 +96,9 @@ function 需要视觉辅助(modelId, modelCaps, files) {
   const enabledModels = 配置.visionAssist.enabledModels || [];
   const isModelEnabled = enabledModels.includes(modelId);
   
-  // 如果模型已启用视觉辅助，无论是否支持图片都启用
-  if (isModelEnabled) {
-    日志.debug('视觉辅助', `模型 ${modelId} 已单独启用视觉辅助`);
-  } else {
-    // 如果模型未单独启用，且本身支持图片，则不需要视觉辅助
-    if (modelCaps && modelCaps.imageInput) {
-      return false;
-    }
+  // 如果模型未单独启用，且本身支持图片，则不需要视觉辅助
+  if (!isModelEnabled && modelCaps && modelCaps.imageInput) {
+    return false;
   }
   
   // 检查是否有图片文件
@@ -111,6 +106,10 @@ function 需要视觉辅助(modelId, modelCaps, files) {
     const mime = f.mimeType || f.mime_type || '';
     return mime.startsWith('image/');
   });
+  
+  if (hasImages && isModelEnabled) {
+    日志.debug('视觉辅助', `模型 ${modelId} 已单独启用视觉辅助`);
+  }
   
   return hasImages;
 }

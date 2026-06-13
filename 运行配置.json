@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-13T08:54:35.772Z",
+  "updatedAt": "2026-06-13T09:40:51.998Z",
   "config": {
     "modelRefreshIntervalSec": 1800,
     "sessionSyncIntervalMin": 30,
@@ -26,17 +26,14 @@
     "upstreamRetryDelayMs": 800,
     "visionAssist": {
       "enabled": true,
-      "model": "openai::gpt-5.5",
+      "model": "Llama::meta-llama/llama-4-scout-17b-16e-instruct",
       "mode": "explicit",
       "prompt": "请详细描述这张图片的内容，包括：主要物体和场景、颜色位置数量等细节、图片中的文字（如果有）、整体氛围和风格。用简洁准确的语言描述。",
       "injectPosition": "separate",
       "showInResponse": true,
       "maxImagesPerCall": 8,
       "recognitionTimeout": 30000,
-      "retryTimes": 1,
-      "enabledModels": [
-        "openai-gpt-oss-120b"
-      ]
+      "retryTimes": 1
     }
   }
 }
