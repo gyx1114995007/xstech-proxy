@@ -33,8 +33,8 @@ upstreamRetryTimes: 1,
 upstreamRetryDelayMs: 800,
 
 visionAssist: {
-  enabled: false,
-  model: 'openai::gpt-4-turbo',
+  enabled: true,
+  model: 'openai::gpt-5.5',
   mode: 'explicit',
   prompt: '请详细描述这张图片的内容，包括：主要物体和场景、颜色位置数量等细节、图片中的文字（如果有）、整体氛围和风格。用简洁准确的语言描述。',
   injectPosition: 'separate',

@@ -2169,24 +2169,21 @@ async function loadVisionConfig() {
     
     // 加载视觉模型列表
     try {
-      const modelsData = await getJson('/v1/models');
-      const models = modelsData.data || [];
+      // 直接从模型价格数据获取支持图片的模型（使用对外id）
+      const priceData = await getJson('/debug/backup/file/模型价格.json');
+      const prices = priceData?.file?.json?.模型价格 || [];
+      const visionModels = prices.filter(p => p.capabilities?.imageInput);
+      
       const select = $('visionModel');
       select.innerHTML = '<option value="">（未选择）</option>';
       
-      // 只显示支持图片的模型
-      const priceData = await getJson('/debug/backup/file/模型价格.json');
-      const prices = priceData?.file?.json?.模型价格 || [];
-      const visionModels = prices.filter(p => p.capabilities?.imageInput).map(p => p.value);
-      
-      for (const m of models) {
-        if (visionModels.includes(m.id)) {
-          const opt = document.createElement('option');
-          opt.value = m.id;
-          opt.textContent = m.id;
-          if (config.model === m.id) opt.selected = true;
-          select.appendChild(opt);
-        }
+      for (const p of visionModels) {
+        const opt = document.createElement('option');
+        // value使用内部ID（如 openai::gpt-5.4），显示用对外id（如 gpt-5-4）
+        opt.value = p.value;
+        opt.textContent = p.id + ' (' + p.value + ')';
+        if (config.model === p.value) opt.selected = true;
+        select.appendChild(opt);
       }
     } catch (modelErr) {
       console.error('加载视觉模型列表失败:', modelErr);
