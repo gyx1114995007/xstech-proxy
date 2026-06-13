@@ -42,6 +42,7 @@ visionAssist: {
   maxImagesPerCall: 8,
   recognitionTimeout: 30000,
   retryTimes: 1,
+  enabledModels: [],
 },
 };
 let 当前配置 = { ...默认配置 };

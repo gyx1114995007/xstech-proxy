@@ -2235,13 +2235,15 @@ async function clearVisionStats() {
 let visionModelsCache = [];
 async function loadVisionModels() {
   try {
-    const [modelsData, priceData] = await Promise.all([
+    const [modelsData, priceData, configData] = await Promise.all([
       getJson('/v1/models'),
-      getJson('/debug/backup/file/模型价格.json')
+      getJson('/debug/backup/file/模型价格.json'),
+      getJson('/debug/config')
     ]);
     
     const models = modelsData.data || [];
     const prices = priceData?.file?.json?.模型价格 || [];
+    const enabledModels = configData.runtime?.config?.visionAssist?.enabledModels || [];
     
     visionModelsCache = models.map(m => {
       const priceItem = prices.find(p => p.id === m.id || p.value === m.id);
@@ -2251,6 +2253,7 @@ async function loadVisionModels() {
         imageInput: priceItem?.capabilities?.imageInput || false,
         anyFile: priceItem?.capabilities?.anyFile || false,
         price: priceItem?.integral || '-',
+        visionEnabled: enabledModels.includes(m.id),
       };
     });
     
@@ -2307,6 +2310,7 @@ function filterVisionModels() {
             <td>
               <input type="checkbox" 
                 data-model-id="${esc(m.id)}" 
+                ${m.visionEnabled ? 'checked' : ''}
                 onchange="toggleModelVision('${esc(m.id)}', this.checked)"
                 style="width:auto">
             </td>
@@ -2318,7 +2322,35 @@ function filterVisionModels() {
 }
 
 function toggleModelVision(modelId, enabled) {
-  toast((enabled ? '启用' : '禁用') + '模型 ' + modelId + ' 的视觉辅助', 'ok');
+  // 获取当前配置
+  getJson('/debug/config').then(data => {
+    const config = data.runtime?.config?.visionAssist || {};
+    let enabledModels = config.enabledModels || [];
+    
+    if (enabled) {
+      // 添加到启用列表
+      if (!enabledModels.includes(modelId)) {
+        enabledModels.push(modelId);
+      }
+    } else {
+      // 从启用列表移除
+      enabledModels = enabledModels.filter(m => m !== modelId);
+    }
+    
+    // 保存配置
+    postJson('/debug/maintenance/config', {
+      visionAssist: {
+        ...config,
+        enabledModels: enabledModels
+      }
+    }).then(() => {
+      toast((enabled ? '启用' : '禁用') + '模型 ' + modelId + ' 的视觉辅助', 'ok');
+    }).catch(e => {
+      toast('保存失败: ' + errorText(e), 'bad');
+    });
+  }).catch(e => {
+    toast('读取配置失败: ' + errorText(e), 'bad');
+  });
 }
 
 function batchEnableVision(enable) {
