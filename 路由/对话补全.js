@@ -70,25 +70,30 @@ router.post('/chat/completions', async (req, res) => {
     if (请求追踪) 请求追踪.setMeta({ xstechModel, filesCount: upstreamFiles.length });
     
     // 视觉辅助处理：为不支持图片的模型提供视觉能力（在文件能力校验之前）
-    const modelCaps = 模型映射.getModelCapabilities(xstechModel);
-    const 视觉辅助请求 = {
-      messages: body.messages || [],
-      _responsesFiles: upstreamFiles,
-    };
-    try {
-      const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, openaiModel, modelCaps);
-      if (处理后请求.messages !== 视觉辅助请求.messages) {
-        // 视觉辅助已生效，更新消息和文件
-        const 重新注入 = await 注入器.注入({ ...body, messages: 处理后请求.messages });
-        userText = 重新注入.text;
-        upstreamFiles.length = 0;
-        upstreamFiles.push(...(处理后请求._responsesFiles || []));
-        if (请求追踪) 请求追踪.setMeta({ filesCount: upstreamFiles.length, visionAssist: true });
-        日志.info('对话补全', '[视觉辅助] 已启用，文件数: ' + upstreamFiles.length);
+    // 跳过内部调用（防止递归）
+    if (body._skipVisionAssist) {
+      日志.debug('对话补全', '跳过视觉辅助处理（内部调用）');
+    } else {
+      const modelCaps = 模型映射.getModelCapabilities(xstechModel);
+      const 视觉辅助请求 = {
+        messages: body.messages || [],
+        _responsesFiles: upstreamFiles,
+      };
+      try {
+        const 处理后请求 = await 视觉辅助.处理视觉辅助(视觉辅助请求, openaiModel, modelCaps);
+        if (处理后请求.messages !== 视觉辅助请求.messages) {
+          // 视觉辅助已生效，更新消息和文件
+          const 重新注入 = await 注入器.注入({ ...body, messages: 处理后请求.messages });
+          userText = 重新注入.text;
+          upstreamFiles.length = 0;
+          upstreamFiles.push(...(处理后请求._responsesFiles || []));
+          if (请求追踪) 请求追踪.setMeta({ filesCount: upstreamFiles.length, visionAssist: true });
+          日志.info('对话补全', '[视觉辅助] 已启用，文件数: ' + upstreamFiles.length);
+        }
+      } catch (visionErr) {
+        日志.error('对话补全', '[视觉辅助] 失败: ' + (visionErr.message || visionErr));
+        // 视觉辅助失败时，继续原流程（会被后续文件校验拒绝）
       }
-    } catch (visionErr) {
-      日志.error('对话补全', '[视觉辅助] 失败: ' + (visionErr.message || visionErr));
-      // 视觉辅助失败时，继续原流程（会被后续文件校验拒绝）
     }
     
     // 校验模型文件能力（在视觉辅助处理之后）

@@ -168,6 +168,7 @@ async function 单次识别(files, visionModel, visionConfig, userQuestion) {
     max_tokens: 1000 + (files.length * 300), // 根据图片数量动态调整
     temperature: 0.3,
     _responsesFiles: files, // 内部文件传递
+    _skipVisionAssist: true, // 跳过视觉辅助处理，防止递归
   };
   
   try {
