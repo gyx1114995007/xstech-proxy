@@ -104,7 +104,11 @@ function 需要视觉辅助(modelId, modelCaps, files) {
   // 检查是否有图片文件
   const hasImages = files.some(f => {
     const mime = f.mimeType || f.mime_type || '';
-    return mime.startsWith('image/');
+    if (mime.startsWith('image/')) return true;
+    
+    // 如果没有mimeType，根据文件名判断
+    const name = (f.name || f.filename || '').toLowerCase();
+    return /\.(jpg|jpeg|png|gif|bmp|webp|svg|ico|tiff|tif)$/i.test(name);
   });
   
   if (hasImages && isModelEnabled) {

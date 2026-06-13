@@ -73,6 +73,13 @@ router.post('/chat/completions', async (req, res) => {
       : Array.isArray(注入结果.files) ? 注入结果.files
       : [];
     const toolNonce = 注入结果.toolNonce;
+    
+    // 调试日志
+    日志.info('对话补全', `[DEBUG] body._upstreamFiles=${body._upstreamFiles?.length}, body._responsesFiles=${body._responsesFiles?.length}, 注入结果.files=${注入结果.files?.length}, upstreamFiles=${upstreamFiles.length}`);
+    if (upstreamFiles.length > 0) {
+      日志.info('对话补全', `[DEBUG] 第一个文件: ${JSON.stringify({name: upstreamFiles[0].name, mimeType: upstreamFiles[0].mimeType || upstreamFiles[0].mime_type})}`);
+    }
+    
     if (请求追踪) 请求追踪.setMeta({ xstechModel, filesCount: upstreamFiles.length });
     
     // 视觉辅助处理：为不支持图片的模型提供视觉能力（在文件能力校验之前）
