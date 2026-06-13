@@ -106,3 +106,4 @@
 {"time":"2026-06-13T11:03:18.686Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
 {"time":"2026-06-13T11:03:23.181Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
 {"time":"2026-06-13T12:21:37.439Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}
+{"time":"2026-06-13T17:40:18.617Z","level":"DEBUG","type":"notify_skipped","title":"企业微信通知跳过","data":{"ok":false,"skipped":true,"reason":"notify_disabled"}}

@@ -3,6 +3,14 @@
   "说明": "自动收集未命中精细规则的模型 SSE 流错误样例。用于后续补充 模型流错误规则.json。",
   "样例": [
     {
+      "time": "2026-06-13T17:44:17.338Z",
+      "type": "model_stream_error",
+      "xstechCode": 1,
+      "message": "���������������������������的�����",
+      "data": null,
+      "count": 1
+    },
+    {
       "time": "2026-06-12T10:36:02.363Z",
       "type": "model_stream_error",
       "xstechCode": 1,
