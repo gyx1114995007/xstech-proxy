@@ -35,6 +35,7 @@ const 配置 = {
     池大小上限: parseInt(process.env.SESSION_POOL_MAX, 10) || 1000,
     云端上限: parseInt(process.env.CLOUD_SESSION_MAX || process.env.SESSION_POOL_MAX || '1000', 10),
     同步间隔秒: parseInt(process.env.SESSION_SYNC_MINUTES || '30', 10) * 60,
+    缓存同步间隔: parseInt(process.env.SESSION_CACHE_SYNC_MINUTES || '10', 10) * 60 * 1000, // 缓存全量同步间隔（毫秒），默认10分钟
     文件路径: '会话池.json',
     默认配置: { contextCount: 0, temperature: 0, presencePenalty: 0, frequencyPenalty: 0, prompt: '', webSearch: false },
   },

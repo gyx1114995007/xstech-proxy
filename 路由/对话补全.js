@@ -142,7 +142,23 @@ router.post('/chat/completions', async (req, res) => {
 
     const t = body.temperature, p = body.presence_penalty, f = body.frequency_penalty;
     if (t !== undefined || p !== undefined || f !== undefined) {
-      await 账号池.带Token重试(当前账号.key, token => 请求转发.更新会话(token, { id: 会话.id, model: 当前模型, contextCount: 0, prompt: '', webSearch: false, temperature: t ?? 0, presencePenalty: p ?? 0, frequencyPenalty: f ?? 0 }));
+      // 先获取完整会话对象
+      const 完整会话 = await 会话池.获取完整会话对象(当前账号.key, 会话.id);
+      
+      // 只修改需要改的字段
+      完整会话.temperature = t ?? 0;
+      完整会话.presencePenalty = p ?? 0;
+      完整会话.frequencyPenalty = f ?? 0;
+      完整会话.contextCount = 0;
+      完整会话.prompt = '';
+      完整会话.webSearch = false;
+      
+      // 更新到服务器
+      await 账号池.带Token重试(当前账号.key, token => 请求转发.更新会话(token, 完整会话));
+      
+      // 更新缓存
+      会话池.更新缓存(会话.id, 完整会话);
+      
       是否脏 = true;
     }
 
