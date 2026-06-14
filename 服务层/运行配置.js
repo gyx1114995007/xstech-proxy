@@ -173,9 +173,21 @@ function 初始化() {
   return 获取状态();
 }
 
+function 深度合并(target, source) {
+  const result = { ...target };
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      result[key] = 深度合并(target[key] || {}, source[key]);
+    } else {
+      result[key] = source[key];
+    }
+  }
+  return result;
+}
+
 function 更新(patch = {}, meta = {}) {
   const before = 获取配置();
-  当前配置 = 标准化({ ...当前配置, ...patch });
+  当前配置 = 标准化(深度合并(当前配置, patch));
   应用到配置对象();
   写文件();
   记录历史('update', before, 获取配置(), meta);
