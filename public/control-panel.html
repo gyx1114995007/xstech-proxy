@@ -1135,7 +1135,7 @@ function renderAccounts(list){
         <div>
           <div class="account-name">${esc(a.key)} · ${esc(a.account)}</div>
 
-          <div class="small">index ${esc(a.index)} · 使用 ${esc(a.usageCount ?? 0)} · ${a.loggingIn ? '<span class="warn">登录中</span>' : '空闲'} · ${a.enabled === false ? '<span class="bad">已禁用</span>' : '<span class="ok">已启用</span>'}</div>
+          <div class="small">index ${esc(a.index)} · 使用次数 ${esc(a.usageCount ?? 0)} · 会话 ${esc(a.sessions?.idle ?? 0)} 空闲 / ${esc(a.sessions?.total ?? 0)} 总数 · ${a.enabled === false ? '<span class="bad">已禁用</span>' : '<span class="ok">已启用</span>'}</div>
           <div class="small">
             健康 ${esc(a.health?.score ?? 100)}
             · 失败 ${esc(a.health?.consecutiveFailures ?? 0)}
