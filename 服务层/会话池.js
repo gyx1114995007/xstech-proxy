@@ -101,7 +101,10 @@ async function 创建新会话(accountKey, model) {
   const key = 确保账号(accountKey);
   const m = model || 默认模型;
   const obj = await 账号池.带Token重试(key, token => 请求转发.创建会话(token, m));
-  try { await 账号池.带Token重试(key, token => 请求转发.更新会话(token, { ...obj, ...默认参数, model: m })); }
+  try { 
+    // obj 本身就是完整的会话对象，直接合并默认参数
+    await 账号池.带Token重试(key, token => 请求转发.更新会话(token, { ...obj, ...默认参数 })); 
+  }
   catch (err) { 日志.warn('会话池', '[' + key + '] 默认配置应用失败: ' + err.message); }
   日志.info('会话池', '[' + key + '] 新会话: id=' + obj.id + ' model=' + m);
   return new 包装会话(obj.id, m);
@@ -238,7 +241,15 @@ async function 归还会话(a, b, c, d) {
 
   if (是否脏) {
     try {
-      await 账号池.带Token重试(key, token => 请求转发.更新会话(token, { id: s.id, model: s.model, ...默认参数 }));
+      // 先获取完整会话对象
+      const 完整会话 = await 账号池.带Token重试(key, token => 请求转发.获取会话详情(token, s.id));
+      if (!完整会话) throw new Error('会话详情不存在');
+      
+      // 合并默认参数（保留其他字段不变）
+      Object.assign(完整会话, 默认参数);
+      
+      // 更新到服务器
+      await 账号池.带Token重试(key, token => 请求转发.更新会话(token, 完整会话));
       日志.info('会话池', '[' + key + '] 会话 ' + sessionId + ' 参数已重置为默认值');
     } catch (err) { 日志.warn('会话池', '[' + key + '] 重置参数失败: ' + err.message); }
   }
