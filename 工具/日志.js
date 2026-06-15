@@ -1,6 +1,7 @@
 const 配置 = require('../启动/配置');
 const fs = require('fs');
 const path = require('path');
+const { 清理不可见字符 } = require('./文本清理');
 
 const 级别权重 = { DEBUG: 0, INFO: 1, WARN: 2, ERROR: 3 };
 
@@ -32,7 +33,7 @@ function 输出到文件(子目录, 文件名, 内容) {
     const { date, ts } = 时间戳();
     const dir = path.join(日志目录, 子目录, date);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.appendFileSync(path.join(dir, date + '-' + 文件名 + '.log'), '[' + ts + '] ' + 内容 + '\n', 'utf-8');
+    fs.appendFileSync(path.join(dir, date + '-' + 文件名 + '.log'), '[' + ts + '] ' + 清理不可见字符(内容) + '\n', 'utf-8');
   } catch {}
 }
 
