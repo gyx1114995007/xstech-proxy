@@ -18,7 +18,7 @@ function 睡眠(ms) {
 function 获取上游配置() {
   return {
     requestTimeoutMs: 配置.上游请求超时毫秒 || 15000,
-    streamTimeoutMs: 配置.上游流超时毫秒 || 180000,
+    streamTimeoutMs: 配置.上游流超时毫秒 || 0,
     retryTimes: 配置.上游重试次数 === undefined ? 1 : 配置.上游重试次数,
     retryDelayMs: 配置.上游重试延迟毫秒 === undefined ? 800 : 配置.上游重试延迟毫秒,
   };

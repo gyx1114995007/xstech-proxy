@@ -28,7 +28,7 @@ lowBalanceThreshold: 50000,
 notifyCooldownMs: 10 * 60 * 1000,
 
 upstreamRequestTimeoutMs: 15000,
-upstreamStreamTimeoutMs: 180000,
+upstreamStreamTimeoutMs: 0,
 upstreamRetryTimes: 1,
 upstreamRetryDelayMs: 800,
 
@@ -80,7 +80,7 @@ function 标准化(input = {}) {
   out.notifyCooldownMs = Math.round(clampNumber(out.notifyCooldownMs, 默认配置.notifyCooldownMs, 60000, 86400000));
 
   out.upstreamRequestTimeoutMs = Math.round(clampNumber(out.upstreamRequestTimeoutMs, 默认配置.upstreamRequestTimeoutMs, 3000, 120000));
-  out.upstreamStreamTimeoutMs = Math.round(clampNumber(out.upstreamStreamTimeoutMs, 默认配置.upstreamStreamTimeoutMs, 30000, 900000));
+  out.upstreamStreamTimeoutMs = Math.round(clampNumber(out.upstreamStreamTimeoutMs, 默认配置.upstreamStreamTimeoutMs, 0, 3600000));
   out.upstreamRetryTimes = Math.round(clampNumber(out.upstreamRetryTimes, 默认配置.upstreamRetryTimes, 0, 5));
   out.upstreamRetryDelayMs = Math.round(clampNumber(out.upstreamRetryDelayMs, 默认配置.upstreamRetryDelayMs, 0, 30000));
 

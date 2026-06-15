@@ -27,7 +27,7 @@ async function 调用ChatCompletions(chatBody, headers = {}, options = {}) {
       'X-Internal-Protocol-Bridge': options.source || 'protocol-bridge',
     },
     responseType: 'stream',
-    timeout: options.timeoutMs || 配置.上游流超时毫秒 || 180000,
+    timeout: options.timeoutMs ?? 配置.上游流超时毫秒 ?? 0,
     signal: options.signal,
     validateStatus: () => true,
     proxy: false,
