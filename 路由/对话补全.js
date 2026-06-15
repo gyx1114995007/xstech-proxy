@@ -22,6 +22,29 @@ function 是取消错误(err) {
   );
 }
 
+function 写入下游(res, payload) {
+  return new Promise((resolve, reject) => {
+    if (!res || res.destroyed || res.writableEnded) return resolve(false);
+    let settled = false;
+    const done = (err, ok) => {
+      if (settled) return;
+      settled = true;
+      if (err) reject(err);
+      else resolve(ok);
+    };
+    try {
+      const ok = res.write(payload, (err) => done(err, true));
+      if (!ok) {
+        res.once('drain', () => done(null, true));
+        res.once('error', (err) => done(err));
+        res.once('close', () => done(null, false));
+      }
+    } catch (err) {
+      done(err);
+    }
+  });
+}
+
 router.post('/chat/completions', async (req, res) => {
   let sessionId = null, 当前模型 = null, 是否脏 = false, 当前账号 = null;
   let abortController = null;
@@ -249,19 +272,19 @@ async function 流式自修复(openaiModel, xstechModel, 当前账号, userText,
     let needFix = false;
     try {
       const response = await 账号池.带Token重试(当前账号.key, token => 请求转发.对话补全(token, { text: userText, sessionId, files }, { signal, trace, attempt }));
-      await 转换流(openaiModel, response.data, (chunk) => {
+      await 转换流(openaiModel, response.data, async (chunk) => {
         if ((signal && signal.aborted) || res.destroyed || res.writableEnded) return;
         if (chunk.error) {
           // 🔑 内容误判不写下游，触发静默修复；其他模型流错误按 OpenAI 错误格式下发
           if (chunk.error.type === 'content_censor' || (chunk.error.message && chunk.error.message.includes('不允许的文本'))) {
             needFix = true;
           } else {
-            try { res.write(格式化chunk(chunk)); } catch (e) {
+            try { await 写入下游(res, 格式化chunk(chunk)); } catch (e) {
               if (e.code !== 'EPIPE' && e.code !== 'ERR_STREAM_DESTROYED') throw e;
             }
           }
         } else {
-          try { res.write(格式化chunk(chunk)); } catch (e) {
+          try { await 写入下游(res, 格式化chunk(chunk)); } catch (e) {
             if (e.code !== 'EPIPE' && e.code !== 'ERR_STREAM_DESTROYED') throw e;
           }
         }
