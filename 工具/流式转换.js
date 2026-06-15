@@ -2,6 +2,7 @@ const 日志 = require('./日志');
 const { 工具调用流解析器 } = require('./工具调用流解析器');
 const { 分类模型流错误, 转OpenAI错误 } = require('./模型流错误分类');
 const 运行指标 = require('./运行指标');
+const { 清理不可见字符, 深度清理不可见字符 } = require('./文本清理');
 function genChunkId() { return 'chatcmpl-' + Date.now() + '-' + Math.random().toString(36).slice(2, 9); }
 
 async function 转换流(model, stream, pushChat, options = {}) {
@@ -17,7 +18,7 @@ async function 转换流(model, stream, pushChat, options = {}) {
 
     async function emitText(text, kind) {
       if (!text) return;
-      const cleanText = String(text).replace(/\u200B/g, '');
+      const cleanText = 清理不可见字符(text);
       if (!cleanText) return;
       if (!toolParser) {
         await pushChat({ done: false, id: chunkId, model, delta: { content: cleanText } });
@@ -206,15 +207,16 @@ async function 转换流(model, stream, pushChat, options = {}) {
 
 function 格式化chunk(chunk) {
   if (chunk.error) {
-    日志.记录下发('[ERROR] ' + JSON.stringify(chunk.error));
-    return 'data: {"error":' + JSON.stringify(chunk.error) + '}\n\n';
+    const cleanError = 深度清理不可见字符(chunk.error);
+    日志.记录下发('[ERROR] ' + JSON.stringify(cleanError));
+    return 'data: {"error":' + JSON.stringify(cleanError) + '}\n\n';
   }
   if (chunk.done) {
-    const d = JSON.stringify({ id: chunk.id, object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model: chunk.model, choices: [{ index: 0, delta: {}, finish_reason: chunk.finish_reason || 'stop' }] });
+    const d = JSON.stringify(深度清理不可见字符({ id: chunk.id, object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model: chunk.model, choices: [{ index: 0, delta: {}, finish_reason: chunk.finish_reason || 'stop' }] }));
     日志.记录下发('[DONE]');
     return 'data: ' + d + '\n\ndata: [DONE]\n\n';
   }
-  const d = JSON.stringify({ id: chunk.id, object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model: chunk.model, choices: [{ index: 0, delta: chunk.delta || {}, finish_reason: null }] });
+  const d = JSON.stringify(深度清理不可见字符({ id: chunk.id, object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model: chunk.model, choices: [{ index: 0, delta: chunk.delta || {}, finish_reason: null }] }));
   return 'data: ' + d + '\n\n';
 }
 

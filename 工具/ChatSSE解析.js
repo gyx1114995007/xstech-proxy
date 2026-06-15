@@ -1,3 +1,5 @@
+const { 清理不可见字符 } = require('./文本清理');
+
 async function 解析ChatSSE(stream, handlers = {}) {
   let buffer = '';
   const state = {
@@ -23,14 +25,7 @@ async function 解析ChatSSE(stream, handlers = {}) {
     for (const choice of choices) {
       const delta = choice.delta || {};
       if (typeof delta.content === 'string' && delta.content) {
-        // 过滤所有零宽字符、不可见字符和控制字符
-        const cleanContent = delta.content
-          // 零宽字符
-          .replace(/[\u200B-\u200D\uFEFF]/g, '')
-          // 其他不可见字符
-          .replace(/[\u00AD\u061C\u180E\u2060-\u2069]/g, '')
-          // 所有Unicode不可见分隔符和格式字符（通用方案）
-          .replace(/[\p{Cf}\p{Zl}\p{Zp}]/gu, '');
+        const cleanContent = 清理不可见字符(delta.content);
         if (!cleanContent) return;
         state.content += cleanContent;
         if (handlers.onTextDelta) await handlers.onTextDelta(cleanContent, json, state);

@@ -8,6 +8,7 @@ const 注入器 = require('../服务层/注入器');
 const 误判检测 = require('../工具/误判检测');
 const { 转换流, 格式化chunk } = require('../工具/流式转换');
 const OpenAI错误 = require('../工具/OpenAI错误');
+const { 清理不可见字符, 深度清理不可见字符 } = require('../工具/文本清理');
 const 运行指标 = require('../工具/运行指标');
 const 链路追踪 = require('../工具/链路追踪');
 const { 校验模型文件能力 } = require('../工具/模型能力校验');
@@ -352,7 +353,7 @@ function 聚合Chunk到State(state, chunk) {
     return;
   }
   const delta = chunk.delta || {};
-  if (typeof delta.content === 'string') state.content += delta.content;
+  if (typeof delta.content === 'string') state.content += 清理不可见字符(delta.content);
   if (Array.isArray(delta.tool_calls)) {
     for (const tc of delta.tool_calls) {
       const idx = Number.isInteger(tc.index) ? tc.index : 0;
@@ -376,12 +377,12 @@ function 聚合Chunk到State(state, chunk) {
 
 function 构造Chat聚合响应(model, state = {}) {
   const toolCalls = (state.toolCalls || []).filter(Boolean);
-  const message = { role: 'assistant', content: state.content || '' };
+  const message = { role: 'assistant', content: 清理不可见字符(state.content || '') };
   if (toolCalls.length) {
     message.content = null;
     message.tool_calls = toolCalls;
   }
-  return {
+  return 深度清理不可见字符({
     id: state.id || ('chatcmpl-' + Date.now()),
     object: 'chat.completion',
     created: Math.floor(Date.now() / 1000),
@@ -392,7 +393,7 @@ function 构造Chat聚合响应(model, state = {}) {
       finish_reason: state.finishReason || (toolCalls.length ? 'tool_calls' : 'stop'),
     }],
     usage: state.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
-  };
+  });
 }
 
 async function 聚合自修复(openaiModel, xstechModel, 当前账号, userText, sessionId, toolNonce = '', signal = null, files = [], trace = null) {

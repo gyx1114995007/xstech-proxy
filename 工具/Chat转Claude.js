@@ -1,3 +1,5 @@
+const { 清理不可见字符, 深度清理不可见字符 } = require('./文本清理');
+
 function 新消息ID() {
   return 'msg_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
 }
@@ -32,10 +34,7 @@ function 安全JSON(text) {
 }
 
 function 清理思考文本(text) {
-  return String(text || '')
-    .replace(/<think>[\s\S]*?<\/think>\s*/gi, '')
-    .replace(/\u200B/g, '')
-    .trimStart();
+  return 清理不可见字符(String(text || '').replace(/<think>[\s\S]*?<\/think>\s*/gi, '')).trimStart();
 }
 
 function 创建思考过滤器() {
@@ -55,7 +54,7 @@ function 创建思考过滤器() {
 
   return {
     push(delta) {
-      const text = String(delta || '').replace(/\u200B/g, '');
+      const text = 清理不可见字符(delta);
       if (!text) return '';
       if (mode === 'visible') return text;
 
@@ -80,7 +79,7 @@ function 创建思考过滤器() {
 
 function 构造Content(text, toolCalls) {
   const content = [];
-  const cleanText = String(text || '').replace(/\u200B/g, '').trimStart();
+  const cleanText = 清理不可见字符(text).trimStart();
   if (cleanText) content.push({ type: 'text', text: cleanText });
 
   for (const tc of 规范ToolCalls(toolCalls)) {
@@ -110,7 +109,7 @@ function 构造完整消息({ id, model, text, toolCalls = [], usage = null, fin
 
 function sse(res, event, data) {
   res.write('event: ' + event + '\n');
-  res.write('data: ' + JSON.stringify(data) + '\n\n');
+  res.write('data: ' + JSON.stringify(深度清理不可见字符(data)) + '\n\n');
 }
 
 function 写Claude流开始(res, { id, model }) {
@@ -142,7 +141,7 @@ function 写Claude文本开始(res, { index = 0 } = {}) {
 }
 
 function 写Claude文本增量(res, delta, { index = 0 } = {}) {
-  const cleanDelta = String(delta || '').replace(/\u200B/g, '');
+  const cleanDelta = 清理不可见字符(delta);
   if (!cleanDelta) return;
   sse(res, 'content_block_delta', {
     type: 'content_block_delta',

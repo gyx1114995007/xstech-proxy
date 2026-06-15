@@ -8,6 +8,7 @@ const OpenAI错误 = require('../工具/OpenAI错误');
 const 日志 = require('../工具/日志');
 const Responses文件上下文 = require('../工具/Responses文件上下文');
 const { 校验模型文件能力 } = require('../工具/模型能力校验');
+const { 深度清理不可见字符 } = require('../工具/文本清理');
 
 const router = express.Router();
 
@@ -116,7 +117,7 @@ router.post('/responses', async (req, res) => {
     if (Array.isArray(chatBody._responsesFiles) && chatBody._responsesFiles.length) {
       Responses文件上下文.保存(id, chatBody._responsesFiles);
     }
-    res.json(response);
+    res.json(深度清理不可见字符(response));
   } catch (err) {
     if (下游断开 || err.code === 'ERR_CANCELED') return;
     const status = err.status || err.statusCode || (err.param || /^missing_|^invalid_|^unsupported_/.test(String(err.code || '')) ? 400 : 500);
@@ -141,7 +142,7 @@ router.get('/responses/:id', async (req, res) => {
       param: 'response_id',
     });
   }
-  res.json(found);
+  res.json(深度清理不可见字符(found));
 });
 
 router.delete('/responses/:id', async (req, res) => {

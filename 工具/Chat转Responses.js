@@ -1,10 +1,12 @@
+const { 清理不可见字符, 深度清理不可见字符 } = require('./文本清理');
+
 function 新响应ID() {
   return 'resp_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 10);
 }
 
 function sse(res, type, data) {
   res.write('event: ' + type + '\n');
-  res.write('data: ' + JSON.stringify({ type, ...data }) + '\n\n');
+  res.write('data: ' + JSON.stringify(深度清理不可见字符({ type, ...data })) + '\n\n');
 }
 
 function messageId(id) { return 'msg_' + String(id).replace(/^resp_/, ''); }
@@ -25,13 +27,14 @@ function 规范ToolCalls(toolCalls) {
 function 构造输出({ id, text, toolCalls }) {
   const output = [];
   const calls = 规范ToolCalls(toolCalls);
-  if (text) {
+  const cleanText = 清理不可见字符(text);
+  if (cleanText) {
     output.push({
       id: messageId(id),
       type: 'message',
       status: 'completed',
       role: 'assistant',
-      content: [{ type: 'output_text', text: text || '', annotations: [] }],
+      content: [{ type: 'output_text', text: cleanText, annotations: [] }],
     });
   }
   for (const tc of calls) {
@@ -58,7 +61,8 @@ function 构造输出({ id, text, toolCalls }) {
 
 function 构造完整响应({ id, model, text, toolCalls = [], status = 'completed', usage = null, finishReason = 'stop', metadata = null, previousResponseId = null }) {
   const now = Math.floor(Date.now() / 1000);
-  const output = 构造输出({ id, text, toolCalls });
+  const cleanText = 清理不可见字符(text);
+  const output = 构造输出({ id, text: cleanText, toolCalls });
   return {
     id,
     object: 'response',
@@ -67,7 +71,7 @@ function 构造完整响应({ id, model, text, toolCalls = [], status = 'complet
     model,
     previous_response_id: previousResponseId || undefined,
     output,
-    output_text: text || '',
+    output_text: cleanText,
     usage: usage || { input_tokens: 0, output_tokens: 0, total_tokens: 0 },
     finish_reason: finishReason || (toolCalls && toolCalls.length ? 'tool_calls' : 'stop'),
     metadata: metadata || undefined,
@@ -100,7 +104,7 @@ function 写Responses文本开始(res, { id }) {
 }
 
 function 写Responses文本增量(res, delta, { id }) {
-  const cleanDelta = String(delta || '').replace(/\u200B/g, '');
+  const cleanDelta = 清理不可见字符(delta);
   if (!cleanDelta) return;
   sse(res, 'response.output_text.delta', {
     item_id: messageId(id), output_index: 0, content_index: 0, delta: cleanDelta,
@@ -135,7 +139,7 @@ function 写ResponsesToolDelta(res, toolCall, current, { id, outputIndex }) {
 }
 
 function 写Responses流结束(res, { id, model, text, toolCalls = [], usage, finishReason, textStarted = true }) {
-  const cleanText = String(text || '').replace(/\u200B/g, '');
+  const cleanText = 清理不可见字符(text);
   if (textStarted) {
     sse(res, 'response.output_text.done', { item_id: messageId(id), output_index: 0, content_index: 0, text: cleanText });
     sse(res, 'response.content_part.done', {

@@ -4,6 +4,7 @@ const { 调用ChatCompletions } = require('../工具/内部Chat调用');
 const { 解析ChatSSE } = require('../工具/ChatSSE解析');
 const Claude = require('../工具/Chat转Claude');
 const 日志 = require('../工具/日志');
+const { 清理不可见字符, 深度清理不可见字符 } = require('../工具/文本清理');
 
 const router = express.Router();
 
@@ -56,7 +57,7 @@ router.post('/messages', async (req, res) => {
       const state = await 解析ChatSSE(chatStream, {
         onTextDelta: async (delta) => {
           if (下游断开 || res.destroyed || res.writableEnded) return;
-          const cleanDelta = String(delta || '').replace(/\u200B/g, '');
+          const cleanDelta = 清理不可见字符(delta);
           if (!cleanDelta) return;
           if (!textStarted) {
             Claude.写Claude文本开始(res, { index: 0 });
@@ -113,14 +114,14 @@ router.post('/messages', async (req, res) => {
       });
     }
 
-    res.json(Claude.构造完整消息({
+    res.json(深度清理不可见字符(Claude.构造完整消息({
       id,
       model: chatBody.model,
       text: state.content,
       toolCalls: state.toolCalls,
       usage: state.usage,
       finishReason: state.finishReason,
-    }));
+    })));
   } catch (err) {
     if (下游断开) return;
     if (err.code === 'ERR_CANCELED' || err.code === 'ABORT_ERR') return;
