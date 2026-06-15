@@ -17,6 +17,12 @@ autoSignInitialDelaySec: 15,
 
 logLevel: 配置.日志级别 || 'INFO',
 censorProbeModel: '',
+sendFileFlags: 配置.xstech.发送文件开关字段 === true,
+sessionCacheSyncIntervalMin: Math.max(1, Math.round((配置.会话池.缓存同步间隔 || 600000) / 60000)),
+openaiChatFileScope: 配置.openai文件提取?.chatScope || 'last_user',
+responsesInputFileScope: 配置.openai文件提取?.responsesScope || 'last_user',
+responsesFileContextMode: 配置.responses文件上下文?.mode || 'auto',
+responsesFileContextTtlMs: 配置.responses文件上下文?.ttlMs || 3600000,
 notifyEnabled: false,
 weworkWebhookUrl: process.env.WEWORK_WEBHOOK_URL || '',
 notifyModelChange: true,
@@ -85,6 +91,12 @@ function 标准化(input = {}) {
   out.upstreamRetryDelayMs = Math.round(clampNumber(out.upstreamRetryDelayMs, 默认配置.upstreamRetryDelayMs, 0, 30000));
 
   out.censorProbeModel = String(out.censorProbeModel || '').trim();
+  out.sendFileFlags = out.sendFileFlags === true;
+  out.sessionCacheSyncIntervalMin = Math.round(clampNumber(out.sessionCacheSyncIntervalMin, 默认配置.sessionCacheSyncIntervalMin, 1, 1440));
+  out.openaiChatFileScope = ['last_user', 'all'].includes(String(out.openaiChatFileScope || '').toLowerCase()) ? String(out.openaiChatFileScope).toLowerCase() : 默认配置.openaiChatFileScope;
+  out.responsesInputFileScope = ['last_user', 'all'].includes(String(out.responsesInputFileScope || '').toLowerCase()) ? String(out.responsesInputFileScope).toLowerCase() : 默认配置.responsesInputFileScope;
+  out.responsesFileContextMode = ['auto', 'always', 'never'].includes(String(out.responsesFileContextMode || '').toLowerCase()) ? String(out.responsesFileContextMode).toLowerCase() : 默认配置.responsesFileContextMode;
+  out.responsesFileContextTtlMs = Math.round(clampNumber(out.responsesFileContextTtlMs, 默认配置.responsesFileContextTtlMs, 0, 86400000));
 
   return out;
 }
@@ -104,6 +116,12 @@ function 应用到配置对象() {
   配置.上游流超时毫秒 = 当前配置.upstreamStreamTimeoutMs;
   配置.上游重试次数 = 当前配置.upstreamRetryTimes;
   配置.上游重试延迟毫秒 = 当前配置.upstreamRetryDelayMs;
+  配置.xstech.发送文件开关字段 = 当前配置.sendFileFlags === true;
+  配置.会话池.缓存同步间隔 = 当前配置.sessionCacheSyncIntervalMin * 60 * 1000;
+  配置.openai文件提取.chatScope = 当前配置.openaiChatFileScope;
+  配置.openai文件提取.responsesScope = 当前配置.responsesInputFileScope;
+  配置.responses文件上下文.mode = 当前配置.responsesFileContextMode;
+  配置.responses文件上下文.ttlMs = 当前配置.responsesFileContextTtlMs;
 }
 
 function 读文件() {
@@ -217,8 +235,18 @@ function 获取状态() {
     effective: {
       modelRefreshIntervalSec: 配置.模型刷新间隔秒,
       sessionSyncIntervalSec: 配置.会话池.同步间隔秒,
+      sessionCacheSyncIntervalMs: 配置.会话池.缓存同步间隔,
       tokenRefreshCheckIntervalSec: 配置.token刷新检查间隔秒,
       tokenRefreshBeforeSec: 配置.token提前刷新秒,
+      sendFileFlags: 配置.xstech.发送文件开关字段,
+      openaiFileScope: {
+        chat: 配置.openai文件提取.chatScope,
+        responses: 配置.openai文件提取.responsesScope,
+      },
+      responsesFileContext: {
+        mode: 配置.responses文件上下文.mode,
+        ttlMs: 配置.responses文件上下文.ttlMs,
+      },
       autoSign: 配置.自动签到 || null,
 
       logLevel: 配置.日志级别,

@@ -17,7 +17,9 @@ const 池 = {};
 const 账号状态 = {};
 const 会话对象缓存 = new Map(); // sessionId -> { data: 完整会话对象, cachedAt: 时间戳 }
 let 上次全量同步时间 = 0;
-const 全量同步间隔 = 配置.会话池.缓存同步间隔;
+function 获取全量同步间隔() {
+  return Math.max(60000, Number(配置.会话池.缓存同步间隔) || 10 * 60 * 1000);
+}
 
 class 包装会话 {
   constructor(id, model) {
@@ -185,6 +187,7 @@ async function 全量同步会话配置(accountKey) {
  */
 function 检查并执行定期同步(accountKey) {
   const now = Date.now();
+  const 全量同步间隔 = 获取全量同步间隔();
   
   // 检查是否需要同步
   if (now - 上次全量同步时间 < 全量同步间隔) {
@@ -203,6 +206,7 @@ function 检查并执行定期同步(accountKey) {
  * 获取缓存统计信息（优化2）
  */
 function 获取缓存统计() {
+  const 全量同步间隔 = 获取全量同步间隔();
   return {
     缓存数量: 会话对象缓存.size,
     上次全量同步: 上次全量同步时间 

@@ -309,17 +309,45 @@
           <label class="small">自动签到间隔小时<input id="cfgSignHours" type="number" min="1" step="1"></label>
           <label class="small">自动签到启动延迟秒<input id="cfgSignDelay" type="number" min="0" step="1"></label>
           <label class="small"><input id="cfgSignEnabled" type="checkbox" style="width:auto;vertical-align:middle"> 启用自动签到</label>
+          <label class="small">会话缓存同步间隔分钟<input id="cfgSessionCacheSync" type="number" min="1" max="1440" step="1"></label>
+          <label class="small"><input id="cfgSendFileFlags" type="checkbox" style="width:auto;vertical-align:middle"> 向 xstech 发送 useImages/useFiles 字段</label>
+          <label class="small">OpenAI Chat 文件提取范围
+            <select id="cfgOpenaiChatFileScope">
+              <option value="last_user">仅最后一条用户消息（last_user）</option>
+              <option value="all">全部历史消息（all）</option>
+            </select>
+          </label>
+          <label class="small">Responses 文件提取范围
+            <select id="cfgResponsesInputFileScope">
+              <option value="last_user">仅最后一条用户输入（last_user）</option>
+              <option value="all">全部输入（all）</option>
+            </select>
+          </label>
+          <label class="small">Responses 文件上下文模式
+            <select id="cfgResponsesFileContextMode">
+              <option value="auto">自动（auto）</option>
+              <option value="always">总是重放（always）</option>
+              <option value="never">从不重放（never）</option>
+            </select>
+          </label>
+          <label class="small">Responses 文件上下文 TTL 毫秒<input id="cfgResponsesFileContextTtl" type="number" min="0" max="86400000" step="60000"></label>
 
+          <h3>上游请求</h3>
           <label class="small">日志级别
             <select id="cfgLogLevel">
               <option>DEBUG</option><option>INFO</option><option>WARN</option><option>ERROR</option>
             </select>
           </label>
-          <label class="small">误判检测探测模型
-            <select id="cfgCensorProbeModel">
-              <option value="">（默认）使用触发误判的模型</option>
-            </select>
-          </label>
+          <label class="small">上游请求超时毫秒<input id="cfgUpstreamRequestTimeout" type="number" min="3000" max="120000" step="1000"></label>
+          <label class="small">上游流超时毫秒<input id="cfgUpstreamStreamTimeout" type="number" min="0" max="3600000" step="1000"></label>
+          <label class="small">上游重试次数<input id="cfgUpstreamRetryTimes" type="number" min="0" max="5" step="1"></label>
+          <label class="small">上游重试延迟毫秒<input id="cfgUpstreamRetryDelay" type="number" min="0" max="30000" step="100"></label>
+
+           <label class="small">误判检测探测模型
+             <select id="cfgCensorProbeModel">
+               <option value="">（默认）使用触发误判的模型</option>
+             </select>
+           </label>
           <h3>企业微信通知</h3>
           <label class="small"><input id="cfgNotifyEnabled" type="checkbox" style="width:auto;vertical-align:middle"> 启用通知</label>
           <label class="small">Webhook URL<input id="cfgWeworkWebhook" type="password" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=..."></label>
@@ -1279,17 +1307,27 @@ $('cfgTokenBefore').value = c.tokenRefreshBeforeSec ?? '';
 $('cfgSignEnabled').checked = c.autoSignEnabled !== false;
 $('cfgSignHours').value = c.autoSignIntervalHours ?? '';
 $('cfgSignDelay').value = c.autoSignInitialDelaySec ?? '';
-
+$('cfgSessionCacheSync').value = c.sessionCacheSyncIntervalMin ?? '';
+$('cfgSendFileFlags').checked = c.sendFileFlags === true;
+$('cfgOpenaiChatFileScope').value = c.openaiChatFileScope || 'last_user';
+$('cfgResponsesInputFileScope').value = c.responsesInputFileScope || 'last_user';
+$('cfgResponsesFileContextMode').value = c.responsesFileContextMode || 'auto';
+$('cfgResponsesFileContextTtl').value = c.responsesFileContextTtlMs ?? '';
 $('cfgLogLevel').value = c.logLevel || 'INFO';
+$('cfgUpstreamRequestTimeout').value = c.upstreamRequestTimeoutMs ?? '';
+$('cfgUpstreamStreamTimeout').value = c.upstreamStreamTimeoutMs ?? '';
+$('cfgUpstreamRetryTimes').value = c.upstreamRetryTimes ?? '';
+$('cfgUpstreamRetryDelay').value = c.upstreamRetryDelayMs ?? '';
+$('cfgCensorProbeModel').value = c.censorProbeModel || '';
 $('cfgNotifyEnabled').checked = c.notifyEnabled === true;
-  $('cfgWeworkWebhook').value = c.weworkWebhookUrl || '';
-  $('cfgNotifyModelChange').checked = c.notifyModelChange !== false;
-  $('cfgNotifyFailure').checked = c.notifyFailure !== false;
-  $('cfgNotifyAccountFailure').checked = c.notifyAccountFailure !== false;
-  $('cfgNotifyUpstreamFailure').checked = c.notifyUpstreamFailure !== false;
-  $('cfgNotifyLowBalance').checked = c.notifyLowBalance !== false;
-  $('cfgLowBalanceThreshold').value = c.lowBalanceThreshold ?? '';
-  $('cfgNotifyCooldownMs').value = c.notifyCooldownMs ?? '';
+$('cfgWeworkWebhook').value = c.weworkWebhookUrl || '';
+$('cfgNotifyModelChange').checked = c.notifyModelChange !== false;
+$('cfgNotifyFailure').checked = c.notifyFailure !== false;
+$('cfgNotifyAccountFailure').checked = c.notifyAccountFailure !== false;
+$('cfgNotifyUpstreamFailure').checked = c.notifyUpstreamFailure !== false;
+$('cfgNotifyLowBalance').checked = c.notifyLowBalance !== false;
+$('cfgLowBalanceThreshold').value = c.lowBalanceThreshold ?? '';
+$('cfgNotifyCooldownMs').value = c.notifyCooldownMs ?? '';
 }
 
 async function loadRuntimeConfig(){
@@ -1443,11 +1481,20 @@ async function saveRuntimeConfig(){
     tokenRefreshBeforeSec: Number($('cfgTokenBefore').value),
     autoSignEnabled: $('cfgSignEnabled').checked,
     autoSignIntervalHours: Number($('cfgSignHours').value),
-
     autoSignInitialDelaySec: Number($('cfgSignDelay').value),
-logLevel: $('cfgLogLevel').value,
-censorProbeModel: $('cfgCensorProbeModel')?.value?.trim() || '',
-notifyEnabled: $('cfgNotifyEnabled').checked,
+    sessionCacheSyncIntervalMin: Number($('cfgSessionCacheSync').value),
+    sendFileFlags: $('cfgSendFileFlags').checked,
+    openaiChatFileScope: $('cfgOpenaiChatFileScope').value,
+    responsesInputFileScope: $('cfgResponsesInputFileScope').value,
+    responsesFileContextMode: $('cfgResponsesFileContextMode').value,
+    responsesFileContextTtlMs: Number($('cfgResponsesFileContextTtl').value),
+    upstreamRequestTimeoutMs: Number($('cfgUpstreamRequestTimeout').value),
+    upstreamStreamTimeoutMs: Number($('cfgUpstreamStreamTimeout').value),
+    upstreamRetryTimes: Number($('cfgUpstreamRetryTimes').value),
+    upstreamRetryDelayMs: Number($('cfgUpstreamRetryDelay').value),
+    logLevel: $('cfgLogLevel').value,
+    censorProbeModel: $('cfgCensorProbeModel')?.value?.trim() || '',
+    notifyEnabled: $('cfgNotifyEnabled').checked,
     weworkWebhookUrl: $('cfgWeworkWebhook').value.trim(),
     notifyModelChange: $('cfgNotifyModelChange').checked,
     notifyFailure: $('cfgNotifyFailure').checked,
