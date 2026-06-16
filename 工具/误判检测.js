@@ -3,6 +3,7 @@ const 请求转发 = require('../服务层/请求转发');
 const 会话池 = require('../服务层/会话池');
 const 账号池 = require('../服务层/账号池');
 const 配置 = require('../启动/配置');
+const 模型映射 = require('../服务层/模型映射');
 const fs = require('fs');
 const path = require('path');
 
