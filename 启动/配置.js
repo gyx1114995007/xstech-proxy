@@ -9,7 +9,9 @@ function 加载运行配置() {
       const data = JSON.parse(fs.readFileSync(文件路径, 'utf-8'));
       return data.config || {};
     }
-  } catch {}
+  } catch (err) {
+    console.error('[配置] 读取运行配置失败:', err.message);
+  }
   return {};
 }
 

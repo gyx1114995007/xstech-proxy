@@ -167,11 +167,15 @@ router.post('/chat/completions', async (req, res) => {
 
     abortController = new AbortController();
     const 中止上游 = (来源) => {
-      if (请求已完成 || 下游已断开) return;
-      下游已断开 = true;
-      日志.warn('对话补全', 来源 + '，正在中止上游 xstech 流，当前会话正常归还');
-      try { abortController.abort(); } catch {}
-    };
+    if (请求已完成 || 下游已断开) return;
+    下游已断开 = true;
+    日志.warn('对话补全', 来源 + '，正在中止上游 xstech 流，当前会话正常归还');
+    try { 
+      abortController.abort(); 
+    } catch (err) {
+      日志.debug('对话补全', `中止信号发送失败: ${err.message}`);
+    }
+  };
     res.on('close', () => {
       if (!res.writableEnded) 中止上游('下游连接已关闭');
     });

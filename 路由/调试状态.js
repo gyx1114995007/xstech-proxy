@@ -124,13 +124,17 @@ function 获取备份文件信息(name) {
 
 function 读取备份文件(name) {
 const file = 备份文件路径(name);
-if (!fs.existsSync(file)) return null;
-const text = fs.readFileSync(file, 'utf-8');
-let json = null;
-try { json = JSON.parse(text); } catch {}
-return {
-...获取备份文件信息(name),
-type: json ? 'json' : 'text',
+  if (!fs.existsSync(file)) return null;
+  const text = fs.readFileSync(file, 'utf-8');
+  let json = null;
+  try { 
+    json = JSON.parse(text); 
+  } catch (err) {
+    日志.debug('调试状态', `备份文件 ${name} 非JSON格式: ${err.message}`);
+  }
+  return {
+    ...获取备份文件信息(name),
+    type: json ? 'json' : 'text',
 json,
 text: json ? undefined : text,
 };
@@ -405,12 +409,16 @@ pages,
 };
 const summary = 汇总积分计划(records);
 try {
-const notifyConfig = 企业微信通知.获取通知配置 ? 企业微信通知.获取通知配置() : {};
-const threshold = Number(notifyConfig.lowBalanceThreshold || 0);
-if (threshold > 0 && summary.usable < threshold && 企业微信通知.发送余额过低) {
-企业微信通知.发送余额过低(accountKey, summary.usable, threshold, summary).catch(() => {});
-}
-} catch {}
+    const notifyConfig = 企业微信通知.获取通知配置 ? 企业微信通知.获取通知配置() : {};
+    const threshold = Number(notifyConfig.lowBalanceThreshold || 0);
+    if (threshold > 0 && summary.usable < threshold && 企业微信通知.发送余额过低) {
+      企业微信通知.发送余额过低(accountKey, summary.usable, threshold, summary).catch((err) => {
+        日志.debug('调试状态', `余额通知发送失败: ${err.message}`);
+      });
+    }
+  } catch (err) {
+    日志.warn('调试状态', `账单查询失败: ${err.message}`);
+  }
 res.json({ ok: true, action: 'billing-plans', accountKey, page: 1, all: true, pages, summary, data });
 } catch (err) {
 OpenAI错误.返回错误(res, err.status || err.statusCode || 500, {
