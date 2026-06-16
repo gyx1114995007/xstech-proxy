@@ -7,10 +7,12 @@ const 文件路径 = path.join(__dirname, '..', process.env.RUNTIME_CONFIG_FILE 
 const 历史文件路径 = path.join(__dirname, '..', '运行配置历史.jsonl');
 
 const 默认配置 = {
-modelRefreshIntervalSec: 配置.模型刷新间隔秒 || 1800,
-sessionSyncIntervalMin: Math.max(1, Math.round((配置.会话池.同步间隔秒 || 1800) / 60)),
-tokenRefreshCheckIntervalSec: 配置.token刷新检查间隔秒 || 60,
-tokenRefreshBeforeSec: 配置.token提前刷新秒 || 300,
+  modelRefreshIntervalSec: 配置.模型刷新间隔秒 || 1800,
+  sessionSyncIntervalMin: Math.max(1, Math.round((配置.会话池.同步间隔秒 || 1800) / 60)),
+  sessionPoolMin: 配置.会话池.池大小下限 || 50,
+  sessionPoolMax: 配置.会话池.池大小上限 || 1000,
+  tokenRefreshCheckIntervalSec: 配置.token刷新检查间隔秒 || 60,
+  tokenRefreshBeforeSec: 配置.token提前刷新秒 || 300,
 autoSignEnabled: true,
 autoSignIntervalHours: 24,
 autoSignInitialDelaySec: 15,
@@ -66,6 +68,8 @@ function 标准化(input = {}) {
 
   out.modelRefreshIntervalSec = Math.round(clampNumber(out.modelRefreshIntervalSec, 默认配置.modelRefreshIntervalSec, 30, 86400));
   out.sessionSyncIntervalMin = Math.round(clampNumber(out.sessionSyncIntervalMin, 默认配置.sessionSyncIntervalMin, 1, 1440));
+  out.sessionPoolMin = Math.round(clampNumber(out.sessionPoolMin, 默认配置.sessionPoolMin, 1, 10000));
+  out.sessionPoolMax = Math.round(clampNumber(out.sessionPoolMax, 默认配置.sessionPoolMax, out.sessionPoolMin, 10000));
   out.tokenRefreshCheckIntervalSec = Math.round(clampNumber(out.tokenRefreshCheckIntervalSec, 默认配置.tokenRefreshCheckIntervalSec, 5, 86400));
   out.tokenRefreshBeforeSec = Math.round(clampNumber(out.tokenRefreshBeforeSec, 默认配置.tokenRefreshBeforeSec, 0, 86400));
   out.autoSignEnabled = out.autoSignEnabled !== false;

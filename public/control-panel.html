@@ -309,8 +309,10 @@
           <label class="small">自动签到间隔小时<input id="cfgSignHours" type="number" min="1" step="1"></label>
           <label class="small">自动签到启动延迟秒<input id="cfgSignDelay" type="number" min="0" step="1"></label>
           <label class="small"><input id="cfgSignEnabled" type="checkbox" style="width:auto;vertical-align:middle"> 启用自动签到</label>
-          <label class="small">会话缓存同步间隔分钟<input id="cfgSessionCacheSync" type="number" min="1" max="1440" step="1"></label>
-          <label class="small"><input id="cfgSendFileFlags" type="checkbox" style="width:auto;vertical-align:middle"> 向 xstech 发送 useImages/useFiles 字段</label>
+          <label class="small">会话池大小下限<input id="cfgSessionPoolMin" type="number" min="1" max="10000" step="10"></label>
+<label class="small">会话池大小上限<input id="cfgSessionPoolMax" type="number" min="1" max="10000" step="50"></label>
+<label class="small">会话缓存同步间隔分钟<input id="cfgSessionCacheSync" type="number" min="1" max="1440" step="1"></label>
+<label class="small"><input id="cfgSendFileFlags" type="checkbox" style="width:auto;vertical-align:middle"> 向 xstech 发送 useImages/useFiles 字段</label>
           <label class="small">OpenAI Chat 文件提取范围
             <select id="cfgOpenaiChatFileScope">
               <option value="last_user">仅最后一条用户消息（last_user）</option>
@@ -1303,6 +1305,8 @@ const c = runtime.config || {};
 $('runtimeConfigBox').textContent = JSON.stringify(runtime, null, 2);
 $('cfgModelRefresh').value = c.modelRefreshIntervalSec ?? '';
 $('cfgSessionSync').value = c.sessionSyncIntervalMin ?? '';
+$('cfgSessionPoolMin').value = c.sessionPoolMin ?? '';
+$('cfgSessionPoolMax').value = c.sessionPoolMax ?? '';
 $('cfgTokenCheck').value = c.tokenRefreshCheckIntervalSec ?? '';
 $('cfgTokenBefore').value = c.tokenRefreshBeforeSec ?? '';
 $('cfgSignEnabled').checked = c.autoSignEnabled !== false;
@@ -1477,9 +1481,11 @@ async function loadRuntimeConfigHistory(){
 
 async function saveRuntimeConfig(){
   const body = {
-    modelRefreshIntervalSec: Number($('cfgModelRefresh').value),
-    sessionSyncIntervalMin: Number($('cfgSessionSync').value),
-    tokenRefreshCheckIntervalSec: Number($('cfgTokenCheck').value),
+modelRefreshIntervalSec: Number($('cfgModelRefresh').value),
+sessionSyncIntervalMin: Number($('cfgSessionSync').value),
+sessionPoolMin: Number($('cfgSessionPoolMin').value),
+sessionPoolMax: Number($('cfgSessionPoolMax').value),
+tokenRefreshCheckIntervalSec: Number($('cfgTokenCheck').value),
     tokenRefreshBeforeSec: Number($('cfgTokenBefore').value),
     autoSignEnabled: $('cfgSignEnabled').checked,
     autoSignIntervalHours: Number($('cfgSignHours').value),
