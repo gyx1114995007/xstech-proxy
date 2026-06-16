@@ -271,7 +271,9 @@ router.post('/chat/completions', async (req, res) => {
         code: 'internal_error',
       });
       res.end();
-    } catch {}
+    } catch (err) {
+      日志.error('对话补全', '错误响应发送失败: ' + err.message);
+    }
   } finally {
     请求已完成 = true;
     if (下游已断开 && 请求结果 === 'success') 请求结果 = 'canceled';
