@@ -135,8 +135,8 @@ async function 被拦(_token, model, text, accountKey) {
             if (!line || !line.startsWith('data:')) continue;
             const ds = line.slice(5).trim();
             if (ds === '[DONE]') { clearTimeout(timer); done(已拦截); return; }
-            try { 
-              const obj = JSON.parse(ds); 
+            try {
+              const obj = JSON.parse(ds);
               所有响应 += JSON.stringify(obj) + ' ';
               if (obj.code !== undefined && obj.err) {
                 if (obj.err.includes('不允许的文本') || obj.err.includes('包含不允许的文本')) {
@@ -147,18 +147,32 @@ async function 被拦(_token, model, text, accountKey) {
           }
         });
         response.data.on('end', () => { clearTimeout(timer); if (!resolved) done(已拦截); });
-        response.data.on('error', (err) => { 
+        response.data.on('error', (err) => {
           所有响应 += 'stream_error:' + (err.message || '');
-          clearTimeout(timer); 
+          clearTimeout(timer);
           done(false);
         });
       });
-    } catch (e) { 
-      日志.记录误判('[探测异常] model=' + 探测模型 + ' account=' + 探测账号Key + ' ' + e.message); 
+    } catch (e) {
+      日志.记录误判('[探测异常] model=' + 探测模型 + ' account=' + 探测账号Key + ' ' + e.message);
       return false;
     }
     finally { if (sid) { try { await 会话池.归还会话(探测账号Key, sid, 探测模型); } catch {} } }
   });
+}
+
+function 从后往前分段(text, 段数) {
+  const len = text.length;
+  const 基本段 = Math.ceil(len / 段数);
+  const 段落列表 = [];
+  // 从后往前分段
+  for (let i = 段数 - 1; i >= 0; i--) {
+    const start = i * 基本段;
+    const end = Math.min(len, (i + 1) * 基本段);
+    if (start >= len) continue;
+    段落列表.push({ start, end, text: text.slice(start, end) });
+  }
+  return 段落列表;
 }
 
 async function 重叠分段检测(token, model, text, accountKey) {
@@ -250,43 +264,52 @@ function 规避全文(text) {
 async function 检测并修复(text, token, model, accountKey) {
   const fixed = 预替换(text);
   if (fixed !== text) { 日志.info('误判检测', '已知规则覆盖'); return fixed; }
-  日志.info('误判检测', '多级递进检测..');
-  日志.记录误判('=== 多级检测 === (总长=' + text.length + ')');
+  日志.info('误判检测', '分级并行检测（从下往上）');
+  日志.记录误判('=== 分级检测 === (总长=' + text.length + ')');
 
-  let 问题段 = await 重叠分段检测(token, model, text, accountKey);
-  if (问题段.length === 0) {
-    日志.记录误判('第1级未发现问题段，尝试合并回退');
-    const 合并段 = [];
-    const 段数 = text.length > 10000 ? 64 : (text.length > 3000 ? 32 : (text.length > 1000 ? 16 : 8));
-    const 基本段 = Math.ceil(text.length / 段数);
-    for (let i = 0; i < 段数; i += 2) {
-      const start = i * 基本段, end = Math.min(text.length, (i + 2) * 基本段);
-      if (start >= text.length) break;
-      合并段.push({ start, end, text: text.slice(start, end) });
+  // 第1级：粗粒度（从后往前8段）
+  const 粗分段 = 从后往前分段(text, 8);
+  日志.记录误判('第1级：粗分段 ' + 粗分段.length + ' 个（从后往前）');
+  const 粗结果 = await Promise.all(粗分段.map(async p => ({ ...p, 被拦: await 被拦(token, model, p.text, accountKey) })));
+  let 问题粗段 = 粗结果.filter(r => r.被拦);
+
+  if (问题粗段.length === 0) {
+    日志.记录误判('第1级未发现问题，尝试全文规避');
+    const ft = 规避全文(text);
+    if (!(await 被拦(token, model, ft, accountKey))) {
+      日志.记录误判('全文规避通过！');
+      日志.info('误判检测', '全文规避成功');
+      return ft;
     }
-    const 合并结果 = await Promise.all(合并段.map(async p => ({ ...p, 被拦: await 被拦(token, model, p.text, accountKey) })));
-    问题段 = 合并结果.filter(r => r.被拦);
-    if (问题段.length === 0) {
-      日志.记录误判('合并回退仍未找到，尝试全文规避');
-      const ft = 规避全文(text);
-      if (!(await 被拦(token, model, ft, accountKey))) { 日志.记录误判('全文规避通过！'); 日志.info('误判检测', '全文规避成功'); return ft; }
-      日志.记录误判('无法修复'); return null;
-    }
+    日志.记录误判('无法修复');
+    return null;
   }
 
-  let 细问题段 = [];
-  const 细分结果 = await Promise.all(问题段.map(p => 细分段检测(token, model, { start: p.start, end: p.end, length: p.text.length }, text, accountKey)));
-  for (const sub of 细分结果) 细问题段.push(...sub);
-  if (细问题段.length === 0) 细问题段 = 问题段;
+  // 第2级：中粒度（只对问题段细分8段）
+  const 中分段列表 = [];
+  for (const 粗段 of 问题粗段) {
+    const 子段 = 从后往前分段(粗段.text, 8);
+    中分段列表.push(...子段.map(s => ({ ...s, start: 粗段.start + s.start, end: 粗段.start + s.end })));
+  }
+  日志.记录误判('第2级：中分段 ' + 中分段列表.length + ' 个');
+  const 中结果 = await Promise.all(中分段列表.map(async p => ({ ...p, 被拦: await 被拦(token, model, p.text, accountKey) })));
+  let 问题中段 = 中结果.filter(r => r.被拦);
 
+  if (问题中段.length === 0) 问题中段 = 问题粗段;
+
+  // 第3级：句级定位
   let merged = '';
-  for (const p of 细问题段) merged += ' ' + (p.text || text.slice(p.start, p.end));
+  for (const p of 问题中段) merged += ' ' + p.text;
   merged = merged.trim();
 
   const 问题句 = await 句级检测(token, model, merged, accountKey);
   let target = merged;
-  if (问题句.length > 0) target = 问题句.map(s => s.text).join(' ');
+  if (问题句.length > 0) {
+    target = 问题句.map(s => s.text).join(' ');
+    日志.记录误判('第3级：定位到 ' + 问题句.length + ' 个问题句');
+  }
 
+  // 第4级：词级精确定位
   const word = await 词级检测(token, model, target, accountKey);
   日志.记录误判('第4级结果: 词=' + (word || ''));
   if (word) {
@@ -296,7 +319,8 @@ async function 检测并修复(text, token, model, accountKey) {
     日志.记录误判('规则保存: "' + word + '"');
     return text.split(word).join(rep);
   }
-  日志.记录误判('未找到精确误判词'); return null;
+  日志.记录误判('未找到精确误判词');
+  return null;
 }
 
 function 获取探测状态() {
