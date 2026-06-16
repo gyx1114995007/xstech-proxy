@@ -157,7 +157,15 @@ async function 被拦(_token, model, text, accountKey) {
       日志.记录误判('[探测异常] model=' + 探测模型 + ' account=' + 探测账号Key + ' ' + e.message);
       return false;
     }
-    finally { if (sid) { try { await 会话池.归还会话(探测账号Key, sid, 探测模型); } catch {} } }
+    finally { 
+      if (sid) { 
+        try { 
+          await 会话池.归还会话(探测账号Key, sid, 探测模型); 
+        } catch (err) {
+          日志.debug('误判检测', `归还探测会话失败: ${err.message}`);
+        }
+      } 
+    }
   });
 }
 

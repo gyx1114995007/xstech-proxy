@@ -220,7 +220,11 @@ function 快照请求指标() {
 
 function 获取指标() {
   let 模型流错误规则 = null;
-  try { 模型流错误规则 = require('./模型流错误分类').获取规则状态(); } catch {}
+  try { 
+    模型流错误规则 = require('./模型流错误分类').获取规则状态(); 
+  } catch (err) {
+    console.error('[运行指标] 加载模型流错误规则失败:', err.message);
+  }
   return JSON.parse(JSON.stringify({
     uptimeSec: Math.floor((Date.now() - 指标.启动时间) / 1000),
     请求: 快照请求指标(),
