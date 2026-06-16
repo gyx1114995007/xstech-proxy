@@ -67,6 +67,66 @@ function 写入下游(res, payload) {
   });
 }
 
+/**
+ * 初始化请求上下文
+ */
+function 初始化请求上下文(body) {
+  return {
+    sessionId: null,
+    当前模型: null,
+    是否脏: false,
+    当前账号: null,
+    abortController: null,
+    下游已断开: false,
+    请求已完成: false,
+    请求指标: null,
+    请求追踪: null,
+    请求结果: 'unknown',
+    请求失败原因: '',
+  };
+}
+
+/**
+ * 提取和验证文件
+ */
+async function 提取并验证文件(body, skipVisionAssist) {
+  const 注入结果 = await 视觉辅助.注入视觉辅助({
+    messages: body.messages,
+    files: body._responsesFiles,
+    skipVisionAssist,
+  });
+
+  const upstreamFiles = 注入结果.files || [];
+  const toolNonce = 注入结果.toolNonce;
+
+  日志.debug('对话补全', `body._upstreamFiles=${body._upstreamFiles?.length}, body._responsesFiles=${body._responsesFiles?.length}, 注入结果.files=${注入结果.files?.length}, upstreamFiles=${upstreamFiles.length}`);
+  if (upstreamFiles.length > 0) {
+    日志.debug('对话补全', `第一个文件: ${JSON.stringify({name: upstreamFiles[0].name, mimeType: upstreamFiles[0].mimeType || upstreamFiles[0].mime_type})}`);
+  }
+
+  return { upstreamFiles, toolNonce };
+}
+
+/**
+ * 设置流式响应头
+ */
+function 设置流式响应头(res, 请求追踪) {
+  res.setHeader('Content-Type', 'text/event-stream; charset=utf-8');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('X-Accel-Buffering', 'no');
+
+  const originalWrite = res.write.bind(res);
+  let firstWriteDone = false;
+  res.write = function(chunk, encoding, callback) {
+    if (!firstWriteDone && 请求追踪 && 请求追踪.markDownstreamWrite) {
+      firstWriteDone = true;
+      请求追踪.markDownstreamWrite();
+    }
+    return originalWrite(chunk, encoding, callback);
+  };
+}
+
 router.post('/chat/completions', async (req, res) => {
   let sessionId = null, 当前模型 = null, 是否脏 = false, 当前账号 = null;
   let abortController = null;
