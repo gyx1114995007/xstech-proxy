@@ -215,16 +215,16 @@ async function 词级检测(token, model, text, accountKey) {
   for (let i = 0; i < tokens.length - 1; i++) 组合列表.push(tokens[i] + tokens[i+1]);
   const 候选 = 组合列表.filter((w, i, arr) => arr.indexOf(w) === i).slice(0, 20);
 
-  for (let i = 0; i < 候选.length; i += 5) {
-    const batch = 候选.slice(i, i + 5);
+  for (let i = 0; i < 候选.length; i += 10) {
+    const batch = 候选.slice(i, i + 10);
     const results = await Promise.all(batch.map(async w => ({ word: w, 被拦: await 被拦(token, model, w, accountKey) })));
     const found = results.find(r => r.被拦);
     if (found) {
       日志.记录误判('双字组合被拦: ' + found.word);
-      // 进一步逐token探测
+      // 进一步逐token探测（并行）
       const t0 = found.word.slice(0, Math.ceil(found.word.length / 2));
       const t1 = found.word.slice(Math.ceil(found.word.length / 2));
-      const [r0, r1] = [await 被拦(token, model, t0, accountKey), await 被拦(token, model, t1, accountKey)];
+      const [r0, r1] = await Promise.all([被拦(token, model, t0, accountKey), 被拦(token, model, t1, accountKey)]);
       if (r0 && r1) return found.word;
       if (r0) return t0;
       if (r1) return t1;
@@ -271,7 +271,8 @@ async function 检测并修复(text, token, model, accountKey) {
   }
 
   let 细问题段 = [];
-  for (const p of 问题段) { const sub = await 细分段检测(token, model, { start: p.start, end: p.end, length: p.text.length }, text, accountKey); 细问题段.push(...sub); }
+  const 细分结果 = await Promise.all(问题段.map(p => 细分段检测(token, model, { start: p.start, end: p.end, length: p.text.length }, text, accountKey)));
+  for (const sub of 细分结果) 细问题段.push(...sub);
   if (细问题段.length === 0) 细问题段 = 问题段;
 
   let merged = '';
