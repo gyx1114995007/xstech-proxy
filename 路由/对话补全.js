@@ -34,11 +34,32 @@ function 写入下游(res, payload) {
       else resolve(ok);
     };
     try {
-      const ok = res.write(payload, (err) => done(err, true));
+      const ok = res.write(payload, (err) => {
+        if (err) return done(err);
+        done(null, true);
+      });
       if (!ok) {
-        res.once('drain', () => done(null, true));
-        res.once('error', (err) => done(err));
-        res.once('close', () => done(null, false));
+        // 等待背压释放
+        const onDrain = () => {
+          cleanup();
+          done(null, true);
+        };
+        const onError = (err) => {
+          cleanup();
+          done(err);
+        };
+        const onClose = () => {
+          cleanup();
+          done(new Error('Response closed during backpressure'));
+        };
+        const cleanup = () => {
+          res.removeListener('drain', onDrain);
+          res.removeListener('error', onError);
+          res.removeListener('close', onClose);
+        };
+        res.once('drain', onDrain);
+        res.once('error', onError);
+        res.once('close', onClose);
       }
     } catch (err) {
       done(err);
