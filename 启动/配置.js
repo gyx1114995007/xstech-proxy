@@ -1,18 +1,11 @@
 require('dotenv').config();
-const fs = require('fs');
 const path = require('path');
+const { 安全读取JSON } = require('../工具/通用函数');
 
 function 加载运行配置() {
-  try {
-    const 文件路径 = path.join(__dirname, '..', '运行配置.json');
-    if (fs.existsSync(文件路径)) {
-      const data = JSON.parse(fs.readFileSync(文件路径, 'utf-8'));
-      return data.config || {};
-    }
-  } catch (err) {
-    console.error('[配置] 读取运行配置失败:', err.message);
-  }
-  return {};
+  const 文件路径 = path.join(__dirname, '..', '运行配置.json');
+  const data = 安全读取JSON(文件路径, {});
+  return data.config || {};
 }
 
 const 运行配置 = 加载运行配置();
