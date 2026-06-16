@@ -421,16 +421,16 @@ async function 聚合自修复(openaiModel, xstechModel, 当前账号, userText,
       if (state.error) return { result: 'failed', status: 500, error: state.error };
       if (!needFix) return { result: 'success', state };
 
-      if (attempt >= MAX_RETRIES) {
-        return { result: 'failed', status: 400, error: { message: '内容含有不允许的文本', type: 'content_filter', code: 'content_censor' } };
-      }
-
       日志.warn('对话补全', '非流式误判检测 (第' + (attempt + 1) + '次)');
       const fixed = await 误判检测.检测并修复(userText, null, xstechModel);
       if (fixed) {
         userText = fixed;
         日志.info('对话补全', '非流式已修复，重试');
         continue;
+      }
+
+      if (attempt >= MAX_RETRIES) {
+        return { result: 'failed', status: 400, error: { message: '内容含有不允许的文本', type: 'content_filter', code: 'content_censor' } };
       }
       return { result: 'failed', status: 400, error: { message: '内容含有不允许的文本', type: 'content_filter', code: 'content_censor' } };
     } catch (err) {
