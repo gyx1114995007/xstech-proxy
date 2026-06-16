@@ -303,16 +303,20 @@ async function 初始化() {
     await 持久化();
   }
   
-  // 优化4：启动时自动全量同步（异步，不阻塞）
-  日志.info('会话池', '启动后台全量同步任务');
-  setImmediate(() => {
-    const accounts = 账号池.获取全部账号 ? 账号池.获取全部账号() : [{ key: 默认账号 }];
-    for (const acc of accounts) {
-      全量同步会话配置(acc.key).catch(err => {
-        日志.warn('会话池', `[${acc.key}] 启动同步失败: ${err.message}`);
-      });
-    }
-  });
+  // 优化4：启动时仅在缓存为空时全量同步（异步，不阻塞）
+  if (会话对象缓存.size === 0) {
+    日志.info('会话池', '缓存为空，启动后台全量同步任务');
+    setImmediate(() => {
+      const accounts = 账号池.获取全部账号 ? 账号池.获取全部账号() : [{ key: 默认账号 }];
+      for (const acc of accounts) {
+        全量同步会话配置(acc.key).catch(err => {
+          日志.warn('会话池', `[${acc.key}] 启动同步失败: ${err.message}`);
+        });
+      }
+    });
+  } else {
+    日志.info('会话池', `已有缓存 ${会话对象缓存.size} 个会话，跳过启动同步`);
+  }
 }
 
 function 解析获取参数(a, b) {
