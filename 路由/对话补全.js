@@ -120,9 +120,9 @@ router.post('/chat/completions', async (req, res) => {
     const toolNonce = 注入结果.toolNonce;
     
     // 调试日志
-    日志.info('对话补全', `[DEBUG] body._upstreamFiles=${body._upstreamFiles?.length}, body._responsesFiles=${body._responsesFiles?.length}, 注入结果.files=${注入结果.files?.length}, upstreamFiles=${upstreamFiles.length}`);
+    日志.debug('对话补全', `body._upstreamFiles=${body._upstreamFiles?.length}, body._responsesFiles=${body._responsesFiles?.length}, 注入结果.files=${注入结果.files?.length}, upstreamFiles=${upstreamFiles.length}`);
     if (upstreamFiles.length > 0) {
-      日志.info('对话补全', `[DEBUG] 第一个文件: ${JSON.stringify({name: upstreamFiles[0].name, mimeType: upstreamFiles[0].mimeType || upstreamFiles[0].mime_type})}`);
+      日志.debug('对话补全', `第一个文件: ${JSON.stringify({name: upstreamFiles[0].name, mimeType: upstreamFiles[0].mimeType || upstreamFiles[0].mime_type})}`);
     }
     
     if (请求追踪) 请求追踪.setMeta({ xstechModel, filesCount: upstreamFiles.length });
