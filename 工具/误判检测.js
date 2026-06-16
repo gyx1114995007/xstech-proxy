@@ -215,8 +215,8 @@ async function 词级检测(token, model, text, accountKey) {
   for (let i = 0; i < tokens.length - 1; i++) 组合列表.push(tokens[i] + tokens[i+1]);
   const 候选 = 组合列表.filter((w, i, arr) => arr.indexOf(w) === i).slice(0, 20);
 
-  for (let i = 0; i < 候选.length; i += 10) {
-    const batch = 候选.slice(i, i + 10);
+  for (let i = 0; i < 候选.length; i += 100) {
+    const batch = 候选.slice(i, i + 100);
     const results = await Promise.all(batch.map(async w => ({ word: w, 被拦: await 被拦(token, model, w, accountKey) })));
     const found = results.find(r => r.被拦);
     if (found) {
