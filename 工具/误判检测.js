@@ -266,10 +266,12 @@ async function 检测并修复(text, token, model, accountKey) {
   if (fixed !== text) { 日志.info('误判检测', '已知规则覆盖'); return fixed; }
 
   // 限制探测文本长度，避免长上下文导致探测失败
+  const 配置 = require('../启动/配置');
+  const 长度限制 = 配置.误判检测?.文本长度限制 || 5000;
   const 原始长度 = text.length;
-  if (text.length > 5000) {
-    text = text.slice(-5000); // 只取最后5000字符
-    日志.记录误判('文本过长(' + 原始长度 + '字)，只探测最后5000字符');
+  if (text.length > 长度限制) {
+    text = text.slice(-长度限制);
+    日志.记录误判('文本过长(' + 原始长度 + '字)，只探测最后' + 长度限制 + '字符');
   }
 
   日志.info('误判检测', '分级并行检测（从下往上）');

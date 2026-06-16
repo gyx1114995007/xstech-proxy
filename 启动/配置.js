@@ -31,6 +31,9 @@ const 配置 = {
   端口: parseInt(process.env.PORT, 10) || 3000,
   主机: process.env.HOST || '0.0.0.0',
   apiKey: process.env.API_KEY || 'default',
+  误判检测: {
+    文本长度限制: parseInt(process.env.CENSOR_DETECT_TAIL_LIMIT, 10) || 5000,
+  },
   xstech: {
     基础地址: process.env.XSTECH_BASE_URL || 'https://xstech.one',
     应用版本: process.env.XSTECH_APP_VERSION || '3.1.0',

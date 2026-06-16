@@ -17,6 +17,7 @@ autoSignInitialDelaySec: 15,
 
 logLevel: 配置.日志级别 || 'INFO',
 censorProbeModel: '',
+censorDetectTailLimit: 配置.误判检测?.文本长度限制 || 5000,
 sendFileFlags: 配置.xstech.发送文件开关字段 === true,
   sessionCacheSyncIntervalMin: Math.max(1, Math.round((配置.会话池.缓存同步间隔 || 86400000) / 60000)),
 openaiChatFileScope: 配置.openai文件提取?.chatScope || 'last_user',
@@ -91,6 +92,7 @@ function 标准化(input = {}) {
   out.upstreamRetryDelayMs = Math.round(clampNumber(out.upstreamRetryDelayMs, 默认配置.upstreamRetryDelayMs, 0, 30000));
 
   out.censorProbeModel = String(out.censorProbeModel || '').trim();
+  out.censorDetectTailLimit = Math.round(clampNumber(out.censorDetectTailLimit, 默认配置.censorDetectTailLimit, 100, 50000));
   out.sendFileFlags = out.sendFileFlags === true;
   out.sessionCacheSyncIntervalMin = Math.round(clampNumber(out.sessionCacheSyncIntervalMin, 默认配置.sessionCacheSyncIntervalMin, 1, 1440));
   out.openaiChatFileScope = ['last_user', 'all'].includes(String(out.openaiChatFileScope || '').toLowerCase()) ? String(out.openaiChatFileScope).toLowerCase() : 默认配置.openaiChatFileScope;
@@ -107,6 +109,8 @@ function 应用到配置对象() {
   配置.token提前刷新秒 = 当前配置.tokenRefreshBeforeSec;
   配置.日志级别 = 当前配置.logLevel;
   配置.误判检测探测模型 = 当前配置.censorProbeModel;
+  if (!配置.误判检测) 配置.误判检测 = {};
+  配置.误判检测.文本长度限制 = 当前配置.censorDetectTailLimit;
   配置.自动签到 = {
     启用: 当前配置.autoSignEnabled,
     间隔小时: 当前配置.autoSignIntervalHours,
@@ -250,6 +254,7 @@ function 获取状态() {
       autoSign: 配置.自动签到 || null,
 
       logLevel: 配置.日志级别,
+      censorDetectTailLimit: 配置.误判检测?.文本长度限制 || 5000,
       notify: {
         enabled: 当前配置.notifyEnabled,
         configured: !!当前配置.weworkWebhookUrl,

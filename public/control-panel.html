@@ -343,7 +343,8 @@
           <label class="small">上游重试次数<input id="cfgUpstreamRetryTimes" type="number" min="0" max="5" step="1"></label>
           <label class="small">上游重试延迟毫秒<input id="cfgUpstreamRetryDelay" type="number" min="0" max="30000" step="100"></label>
 
-           <label class="small">误判检测探测模型
+           <label class="small">误判检测文本长度限制<input id="cfgCensorDetectTailLimit" type="number" min="100" max="50000" step="100"></label>
+<label class="small">误判检测探测模型
              <select id="cfgCensorProbeModel">
                <option value="">（默认）使用触发误判的模型</option>
              </select>
@@ -1318,6 +1319,7 @@ $('cfgUpstreamRequestTimeout').value = c.upstreamRequestTimeoutMs ?? '';
 $('cfgUpstreamStreamTimeout').value = c.upstreamStreamTimeoutMs ?? '';
 $('cfgUpstreamRetryTimes').value = c.upstreamRetryTimes ?? '';
 $('cfgUpstreamRetryDelay').value = c.upstreamRetryDelayMs ?? '';
+$('cfgCensorDetectTailLimit').value = c.censorDetectTailLimit ?? '';
 $('cfgCensorProbeModel').value = c.censorProbeModel || '';
 $('cfgNotifyEnabled').checked = c.notifyEnabled === true;
 $('cfgWeworkWebhook').value = c.weworkWebhookUrl || '';
@@ -1492,8 +1494,9 @@ async function saveRuntimeConfig(){
     upstreamStreamTimeoutMs: Number($('cfgUpstreamStreamTimeout').value),
     upstreamRetryTimes: Number($('cfgUpstreamRetryTimes').value),
     upstreamRetryDelayMs: Number($('cfgUpstreamRetryDelay').value),
-    logLevel: $('cfgLogLevel').value,
-    censorProbeModel: $('cfgCensorProbeModel')?.value?.trim() || '',
+logLevel: $('cfgLogLevel').value,
+censorDetectTailLimit: Number($('cfgCensorDetectTailLimit').value),
+censorProbeModel: $('cfgCensorProbeModel')?.value?.trim() || '',
     notifyEnabled: $('cfgNotifyEnabled').checked,
     weworkWebhookUrl: $('cfgWeworkWebhook').value.trim(),
     notifyModelChange: $('cfgNotifyModelChange').checked,
