@@ -163,7 +163,11 @@ async function 被拦(_token, model, text, accountKey) {
 
 async function 重叠分段检测(token, model, text, accountKey) {
   const len = text.length;
-  let 段数 = 4; if (len > 500) 段数 = 8; if (len > 2000) 段数 = 16;
+  let 段数 = 8; // 默认8段
+  if (len > 500) 段数 = 16;
+  if (len > 1000) 段数 = 32;
+  if (len > 3000) 段数 = 64;
+  if (len > 10000) 段数 = 128;
   const 基本段 = Math.ceil(len / 段数), 重叠 = Math.ceil(基本段 * 0.1);
   const 段落列表 = [];
   for (let i = 0; i < 段数; i++) {
@@ -253,7 +257,7 @@ async function 检测并修复(text, token, model, accountKey) {
   if (问题段.length === 0) {
     日志.记录误判('第1级未发现问题段，尝试合并回退');
     const 合并段 = [];
-    const 段数 = text.length > 2000 ? 16 : (text.length > 500 ? 8 : 4);
+    const 段数 = text.length > 10000 ? 64 : (text.length > 3000 ? 32 : (text.length > 1000 ? 16 : 8));
     const 基本段 = Math.ceil(text.length / 段数);
     for (let i = 0; i < 段数; i += 2) {
       const start = i * 基本段, end = Math.min(text.length, (i + 2) * 基本段);
