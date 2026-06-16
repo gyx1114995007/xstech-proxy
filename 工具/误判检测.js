@@ -264,6 +264,14 @@ function 规避全文(text) {
 async function 检测并修复(text, token, model, accountKey) {
   const fixed = 预替换(text);
   if (fixed !== text) { 日志.info('误判检测', '已知规则覆盖'); return fixed; }
+
+  // 限制探测文本长度，避免长上下文导致探测失败
+  const 原始长度 = text.length;
+  if (text.length > 5000) {
+    text = text.slice(-5000); // 只取最后5000字符
+    日志.记录误判('文本过长(' + 原始长度 + '字)，只探测最后5000字符');
+  }
+
   日志.info('误判检测', '分级并行检测（从下往上）');
   日志.记录误判('=== 分级检测 === (总长=' + text.length + ')');
 
