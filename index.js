@@ -2,6 +2,14 @@
 const 日志 = require('./工具/日志');
 日志.separator('启动');
 const 配置 = require('./启动/配置');
+const { 验证并报告 } = require('./工具/配置验证');
+
+// 启动时验证配置
+if (!验证并报告(配置)) {
+  console.error('[启动] 配置验证失败，服务终止');
+  process.exit(1);
+}
+
 const 运行配置 = require('./服务层/运行配置');
 运行配置.初始化();
 if (日志.设置级别) 日志.设置级别(配置.日志级别);
