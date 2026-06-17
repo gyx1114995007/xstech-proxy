@@ -300,12 +300,12 @@ async function 检测并修复(text, token, model, accountKey) {
 
   if (问题粗段.length === 0) {
     日志.记录误判('第1级未发现问题，尝试全文规避');
-    const ft = 规避全文(探测文本);
+    // 对完整原始文本做全文规避，因为误判词可能在前面未探测的部分
+    const ft = 规避全文(原始文本);
     if (!(await 被拦(token, model, ft, accountKey))) {
       日志.记录误判('全文规避通过！');
       日志.info('误判检测', '全文规避成功');
-      // 关键修复：只对探测部分规避，前面部分保持原样
-      return 前缀 + ft;
+      return ft;
     }
     日志.记录误判('无法修复');
     return null;
