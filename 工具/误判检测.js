@@ -273,31 +273,39 @@ async function 检测并修复(text, token, model, accountKey) {
   const fixed = 预替换(text);
   if (fixed !== text) { 日志.info('误判检测', '已知规则覆盖'); return fixed; }
 
+  // 保留原始文本，用于最终返回
+  const 原始文本 = text;
+
   // 限制探测文本长度，避免长上下文导致探测失败
   const 配置 = require('../启动/配置');
   const 长度限制 = 配置.误判检测?.文本长度限制 || 5000;
-  const 原始长度 = text.length;
-  if (text.length > 长度限制) {
-    text = text.slice(-长度限制);
+  const 原始长度 = 原始文本.length;
+  let 探测文本 = 原始文本;
+  let 前缀 = ''; // 未探测的前面部分
+
+  if (原始长度 > 长度限制) {
+    探测文本 = 原始文本.slice(-长度限制);
+    前缀 = 原始文本.slice(0, -长度限制);
     日志.记录误判('文本过长(' + 原始长度 + '字)，只探测最后' + 长度限制 + '字符');
   }
 
   日志.info('误判检测', '分级并行检测（从下往上）');
-  日志.记录误判('=== 分级检测 === (总长=' + text.length + ')');
+  日志.记录误判('=== 分级检测 === (总长=' + 探测文本.length + ')');
 
   // 第1级：粗粒度（从后往前8段）
-  const 粗分段 = 从后往前分段(text, 8);
+  const 粗分段 = 从后往前分段(探测文本, 8);
   日志.记录误判('第1级：粗分段 ' + 粗分段.length + ' 个（从后往前）');
   const 粗结果 = await Promise.all(粗分段.map(async p => ({ ...p, 被拦: await 被拦(token, model, p.text, accountKey) })));
   let 问题粗段 = 粗结果.filter(r => r.被拦);
 
   if (问题粗段.length === 0) {
     日志.记录误判('第1级未发现问题，尝试全文规避');
-    const ft = 规避全文(text);
+    const ft = 规避全文(探测文本);
     if (!(await 被拦(token, model, ft, accountKey))) {
       日志.记录误判('全文规避通过！');
       日志.info('误判检测', '全文规避成功');
-      return ft;
+      // 关键修复：只对探测部分规避，前面部分保持原样
+      return 前缀 + ft;
     }
     日志.记录误判('无法修复');
     return null;
@@ -335,7 +343,8 @@ async function 检测并修复(text, token, model, accountKey) {
     规则表[word] = rep; 保存规则();
     日志.info('误判检测', '已记录规则: "' + word + '"');
     日志.记录误判('规则保存: "' + word + '"');
-    return text.split(word).join(rep);
+    // 关键修复：对原始文本进行替换，而非只对探测部分
+    return 原始文本.split(word).join(rep);
   }
   日志.记录误判('未找到精确误判词');
   return null;
